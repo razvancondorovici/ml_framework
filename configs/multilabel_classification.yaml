@@ -1,0 +1,98 @@
+# Multi-label Classification Configuration
+# Example configuration for multi-label image classification
+
+experiment:
+  name: multilabel_classification
+  seed: 42
+
+data:
+  dataset_type: multi_label
+  data_dir: ./datasets/multilabel
+  annotations_file: ./datasets/multilabel/annotations.csv
+  num_classes: 20
+  class_names: ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic_light', 'fire_hydrant', 'stop_sign', 'parking_meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow']
+  train_split: 0.8
+  val_split: 0.2
+  test_split: 0.0
+
+dataloader:
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  persistent_workers: true
+  prefetch_factor: 2
+
+model:
+  backbone: timm_efficientnet_b3
+  pretrained: true
+  freeze_backbone: false
+  dropout: 0.3
+
+loss:
+  name: bce_with_logits
+  pos_weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+optimizer:
+  name: adamw
+  lr: 1e-3
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+scheduler:
+  name: cosine_warmup
+  warmup_epochs: 10
+  total_epochs: 150
+  min_lr: 1e-6
+
+training:
+  epochs: 150
+  amp: true
+  gradient_clip_norm: 1.0
+  gradient_accumulation_steps: 1
+
+metrics:
+  task: multilabel
+  num_classes: 20
+  average: macro
+  threshold: 0.5
+
+callbacks:
+  checkpoint:
+    monitor: val_f1
+    mode: max
+    save_top_k: 3
+    enabled: true
+  
+  early_stopping:
+    monitor: val_f1
+    mode: max
+    patience: 20
+    enabled: true
+  
+  sample_visualizer:
+    num_samples: 16
+    save_every_n_epochs: 5
+    enabled: true
+  
+  confusion_matrix:
+    save_every_n_epochs: 10
+    enabled: true
+  
+  learning_rate:
+    save_every_n_epochs: 10
+    enabled: true
+
+transforms:
+  resize: 224
+  horizontal_flip: true
+  vertical_flip: false
+  rotation: 15
+  color_jitter: true
+  hue_saturation_value: true
+  gaussian_noise: true
+  cutout: true
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  use_albumentations: true

@@ -1,0 +1,35 @@
+# PyTorch Training Framework Dependencies
+# Latest versions as of October 2024
+
+# Core PyTorch
+torch>=2.4.0
+torchvision>=0.19.0
+
+# Model backbones and utilities
+timm>=1.0.8
+
+# Data augmentation
+albumentations>=1.4.14
+
+# Metrics
+torchmetrics>=1.4.1
+
+# Configuration management
+omegaconf>=2.3.0
+PyYAML>=6.0.1
+
+# Visualization and plotting
+matplotlib>=3.9.0
+
+# Data processing
+scikit-learn>=1.5.1
+pandas>=2.2.2
+Pillow>=10.4.0
+opencv-python>=4.10.0
+
+# Utilities
+tqdm>=4.66.5
+
+# Optional: ONNX export
+onnx>=1.16.0
+onnxruntime>=1.17.0
