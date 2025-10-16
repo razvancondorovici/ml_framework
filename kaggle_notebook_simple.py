@@ -1,14 +1,11 @@
-# Simplified Kaggle Notebook Template - Avoids torchmetrics conflicts
-# Copy this code into your Kaggle notebook cells
-
-# =============================================================================
-# CELL 1: Environment Setup and Dependencies
-# =============================================================================
-
 import torch
 import sys
 import os
 from pathlib import Path
+
+# =============================================================================
+# CELL 1: Check Environment
+# =============================================================================
 
 # Check GPU availability
 print(f"CUDA available: {torch.cuda.is_available()}")
@@ -17,32 +14,93 @@ if torch.cuda.is_available():
     print(f"GPU name: {torch.cuda.get_device_name(0)}")
     print(f"GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-# Install required packages with specific versions to avoid conflicts
-!pip install --upgrade pip
-!pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121
-!pip install timm==0.9.12 segmentation-models-pytorch==0.3.3 albumentations==1.3.1
-!pip install omegaconf==2.3.0 PyYAML==6.0.1
-# Skip torchmetrics to avoid transformers conflict
-# !pip install torchmetrics==1.2.0
-
 # =============================================================================
 # CELL 2: Clone Repository and Setup Framework
 # =============================================================================
+# This cell can be run multiple times safely:
+# - First run: Installs packages and clones repository
+# - Subsequent runs: Only re-clones repository (skips package installation)
+# - Use this when you want to pull latest changes from your repository
 
-# Clone your repository (replace with your GitHub repository URL)
-!git clone https://github.com/yourusername/ML_Framework.git /kaggle/working/ML_Framework
+# Function to safely re-clone repository
+def safe_reclone_repository():
+    """Safely remove and re-clone the repository, handling directory changes."""
+    # Ensure we're in a safe directory before removing
+    original_cwd = os.getcwd()
+    safe_dir = '/kaggle/working'
+    
+    try:
+        # Change to safe directory
+        os.chdir(safe_dir)
+        
+        # Remove existing framework directory
+        import shutil
+        framework_path = '/kaggle/working/ML_Framework'
+        if os.path.exists(framework_path):
+            shutil.rmtree(framework_path)
+            print(f"Removed existing framework directory: {framework_path}")
+        
+        # Clone repository
+        print("Cloning repository...")
+        os.system('git clone https://github.com/razvancondorovici/ml_framework.git /kaggle/working/ML_Framework')
+        
+        # Change to framework directory
+        os.chdir(framework_path)
+        print(f"Changed to framework directory: {os.getcwd()}")
+        
+        # Add framework to Python path (remove old path if exists)
+        framework_path_str = '/kaggle/working/ML_Framework'
+        if framework_path_str in sys.path:
+            sys.path.remove(framework_path_str)
+        sys.path.append(framework_path_str)
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error during repository re-clone: {e}")
+        # Try to restore original directory
+        try:
+            os.chdir(original_cwd)
+        except:
+            os.chdir('/kaggle/working')
+        return False
 
-# Add framework to Python path
-sys.path.append('/kaggle/working/ML_Framework')
+# Check if packages are already installed to avoid reinstalling
+def check_packages_installed():
+    """Check if required packages are already installed."""
+    try:
+        import timm
+        import segmentation_models_pytorch
+        import albumentations
+        import omegaconf
+        return True
+    except ImportError:
+        return False
 
-# Change to framework directory
-os.chdir('/kaggle/working/ML_Framework')
+# Only install packages if they're not already installed
+if not check_packages_installed():
+    print("Installing required packages...")
+    # Step 1: Force install NumPy 1.x and ignore other requirements
+    !pip install "numpy==1.26.4" --force-reinstall --no-deps
 
-# Import framework components
-from utils.kaggle_utils import setup_kaggle_environment, print_kaggle_info, is_kaggle_environment
-from utils.config import load_config
+    # Step 2: Install packages WITHOUT letting them upgrade NumPy
+    !pip install timm segmentation-models-pytorch albumentations omegaconf --no-deps
 
-print("Framework setup complete!")
+    # Step 3: Install only the missing dependencies (not NumPy)
+    !pip install pillow tqdm scipy pydantic antlr4-python3-runtime filelock fsspec packaging httpx typer-slim typing-extensions
+else:
+    print("Required packages already installed, skipping installation.")
+
+# Re-clone repository
+success = safe_reclone_repository()
+
+if success:
+    # Import framework components
+    from utils.kaggle_utils import setup_kaggle_environment, print_kaggle_info, is_kaggle_environment
+    from utils.config import load_config
+    print("Framework setup complete!")
+else:
+    print("Failed to setup framework. Please restart the notebook.")
 
 # =============================================================================
 # CELL 3: Setup Kaggle Environment
@@ -52,339 +110,38 @@ print("Framework setup complete!")
 if is_kaggle_environment():
     working_dir = setup_kaggle_environment()
     print_kaggle_info()
-    print(f"Working directory: {working_dir}")
+    #print(f"Working directory: {working_dir}")
 
 # =============================================================================
-# CELL 4: Create Kaggle Configuration (No torchmetrics dependency)
+# CELL 5: Run Training
 # =============================================================================
 
-# Create Kaggle-optimized configuration that doesn't rely on torchmetrics
-kaggle_config = """
-experiment:
-  name: segmentation_kaggle_gpu
-  seed: 42
-
-data:
-  dataset_type: segmentation
-  # Replace 'your-dataset' with your actual dataset name
-  data_dir: /kaggle/input/your-dataset/dataset/train/images
-  mask_dir: /kaggle/input/your-dataset/dataset/train/masks
-  val_data_dir: /kaggle/input/your-dataset/dataset/val/images
-  val_mask_dir: /kaggle/input/your-dataset/dataset/val/masks
-  num_classes: 2
-  class_names: ['background', 'markers']
-  mask_format: 'rgb'
-  train_split: 1.0
-  val_split: 1.0
-  test_split: 0.0
-
-dataloader:
-  batch_size: 16
-  num_workers: 2
-  pin_memory: true
-  persistent_workers: true
-  prefetch_factor: 2
-  drop_last: true
-
-model:
-  backbone: smp_deeplabv3plus_resnet50
-  pretrained: true
-  freeze_backbone: false
-  in_channels: 3
-  encoder_depth: 5
-  decoder_channels: 256
-  upsampling: 4
-
-loss:
-  name: combined
-  ce_weight: 1.0
-  dice_weight: 1.0
-  focal_weight: 0.0
-  lovasz_weight: 0.0
-  ignore_index: 255
-
-optimizer:
-  name: adamw
-  lr: 1e-4
-  weight_decay: 1e-4
-  betas: [0.9, 0.999]
-  eps: 1e-8
-
-scheduler:
-  name: cosine_warmup
-  warmup_epochs: 5
-  total_epochs: 30
-  min_lr: 1e-6
-
-training:
-  epochs: 30
-  amp: true
-  gradient_clip_norm: 1.0
-  gradient_accumulation_steps: 1
-
-# Simple metrics configuration (no torchmetrics dependency)
-metrics:
-  task: segmentation
-  num_classes: 2
-  ignore_index: 255
-
-callbacks:
-  checkpoint:
-    monitor: val_loss
-    mode: min
-    save_top_k: 2
-    enabled: true
-    save_last: true
-    save_best: true
-  
-  early_stopping:
-    monitor: val_loss
-    mode: min
-    patience: 8
-    enabled: true
-  
-  sample_visualizer:
-    num_samples: 4
-    save_every_n_epochs: 10
-    enabled: true
-  
-  confusion_matrix:
-    save_every_n_epochs: 15
-    enabled: true
-  
-  learning_rate:
-    save_every_n_epochs: 10
-    enabled: true
-
-transforms:
-  resize: 512
-  horizontal_flip: true
-  vertical_flip: false
-  rotation: 15
-  shift_scale_rotate: true
-  elastic_transform: false
-  grid_distortion: false
-  color_jitter: true
-  gaussian_noise: false
-  gaussian_blur: false
-  normalize:
-    mean: [0.485, 0.456, 0.406]
-    std: [0.229, 0.224, 0.225]
-  use_albumentations: true
-"""
-
-# Save configuration
-with open('/kaggle/working/kaggle_config.yaml', 'w') as f:
-    f.write(kaggle_config)
-
-print("Configuration saved!")
-
-# =============================================================================
-# CELL 5: Import and Run Training (with fallback metrics)
-# =============================================================================
-
-# Import training components with fallback handling
-try:
-    from scripts.train import main
-    print("Using full framework with fallback metrics")
-except Exception as e:
-    print(f"Error importing full framework: {e}")
-    print("Using simplified training approach...")
-
-# Try to run training
 import subprocess
 
+# Run training
 print("Starting training...")
-try:
-    result = subprocess.run([
-        'python', 'scripts/train.py',
-        '--config', '/kaggle/working/kaggle_config.yaml',
-        '--device', 'cuda'
-    ], capture_output=True, text=True)
+result = subprocess.run([
+    'python', 'scripts/train.py',
+    '--config', '/kaggle/working/ML_Framework/configs/segmentation_kaggle_gpu.yaml',
+    '--device', 'cuda'
+], capture_output=True, text=True)
 
-    print("Training output:")
-    print(result.stdout)
+print("Training output:")
+print(result.stdout)
 
-    if result.stderr:
-        print("Errors:")
-        print(result.stderr)
-        
-    if result.returncode == 0:
-        print("✓ Training completed successfully!")
-    else:
-        print("✗ Training failed!")
-
-except Exception as e:
-    print(f"Training failed with exception: {e}")
-    print("This might be due to package conflicts. Try the manual training approach below.")
+if result.stderr:
+    print("Errors:")
+    print(result.stderr)
 
 # =============================================================================
-# CELL 6: Alternative Manual Training (if framework fails)
-# =============================================================================
-
-# If the framework fails, we can do a simple manual training
-print("\\n" + "="*50)
-print("ALTERNATIVE: Manual Training Approach")
-print("="*50)
-
-try:
-    # Import basic components
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    from torch.utils.data import DataLoader
-    import segmentation_models_pytorch as smp
-    import albumentations as A
-    from albumentations.pytorch import ToTensorV2
-    from PIL import Image
-    import numpy as np
-    import cv2
-    from pathlib import Path
-    import json
-    
-    print("✓ Basic imports successful")
-    
-    # Create a simple dataset class
-    class SimpleSegmentationDataset:
-        def __init__(self, image_dir, mask_dir, transform=None):
-            self.image_dir = Path(image_dir)
-            self.mask_dir = Path(mask_dir)
-            self.transform = transform
-            
-            # Get image files
-            self.image_files = list(self.image_dir.glob('*.jpg')) + list(self.image_dir.glob('*.png'))
-            print(f"Found {len(self.image_files)} images")
-        
-        def __len__(self):
-            return len(self.image_files)
-        
-        def __getitem__(self, idx):
-            img_path = self.image_files[idx]
-            mask_path = self.mask_dir / (img_path.stem + '.png')
-            
-            # Load image
-            image = cv2.imread(str(img_path))
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            
-            # Load mask
-            mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-            
-            # Apply transforms
-            if self.transform:
-                transformed = self.transform(image=image, mask=mask)
-                image = transformed['image']
-                mask = transformed['mask']
-            
-            return image, mask
-    
-    # Create transforms
-    transform = A.Compose([
-        A.Resize(512, 512),
-        A.HorizontalFlip(p=0.5),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2()
-    ])
-    
-    # Create datasets
-    train_dataset = SimpleSegmentationDataset(
-        '/kaggle/input/your-dataset/dataset/train/images',
-        '/kaggle/input/your-dataset/dataset/train/masks',
-        transform=transform
-    )
-    
-    val_dataset = SimpleSegmentationDataset(
-        '/kaggle/input/your-dataset/dataset/val/images',
-        '/kaggle/input/your-dataset/dataset/val/masks',
-        transform=transform
-    )
-    
-    # Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=2)
-    
-    # Create model
-    model = smp.DeepLabV3Plus(
-        encoder_name='resnet50',
-        encoder_weights='imagenet',
-        in_channels=3,
-        classes=2
-    )
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = model.to(device)
-    
-    # Create optimizer and loss
-    optimizer = optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
-    criterion = nn.CrossEntropyLoss()
-    
-    print(f"✓ Model created and moved to {device}")
-    print(f"✓ Training on {len(train_dataset)} samples, validating on {len(val_dataset)} samples")
-    
-    # Simple training loop
-    num_epochs = 10  # Reduced for demo
-    train_losses = []
-    val_losses = []
-    
-    for epoch in range(num_epochs):
-        # Training
-        model.train()
-        train_loss = 0.0
-        for batch_idx, (images, masks) in enumerate(train_loader):
-            images, masks = images.to(device), masks.to(device)
-            
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, masks)
-            loss.backward()
-            optimizer.step()
-            
-            train_loss += loss.item()
-            
-            if batch_idx % 5 == 0:
-                print(f'Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.4f}')
-        
-        # Validation
-        model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for images, masks in val_loader:
-                images, masks = images.to(device), masks.to(device)
-                outputs = model(images)
-                loss = criterion(outputs, masks)
-                val_loss += loss.item()
-        
-        train_loss /= len(train_loader)
-        val_loss /= len(val_loader)
-        
-        train_losses.append(train_loss)
-        val_losses.append(val_loss)
-        
-        print(f'Epoch {epoch}: Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}')
-        
-        # Save model
-        torch.save(model.state_dict(), f'/kaggle/working/model_epoch_{epoch}.pt')
-    
-    print("✓ Manual training completed!")
-    
-    # Save training history
-    history = {
-        'train_loss': train_losses,
-        'val_loss': val_losses
-    }
-    
-    with open('/kaggle/working/training_history.json', 'w') as f:
-        json.dump(history, f, indent=2)
-    
-except Exception as e:
-    print(f"Manual training also failed: {e}")
-    print("Please check your dataset paths and structure.")
-
-# =============================================================================
-# CELL 7: Save and Display Results
+# CELL 6: Save and Display Results
 # =============================================================================
 
 import shutil
 from pathlib import Path
+import matplotlib.pyplot as plt
+import json
+from PIL import Image
 
 # Copy results to a permanent location
 output_dir = Path('/kaggle/working/outputs')
@@ -394,41 +151,112 @@ if output_dir.exists():
     shutil.copytree(output_dir, results_dir, dirs_exist_ok=True)
 
 # List all important files
-print("\\nTraining completed! Available outputs:")
+print("Training completed! Available outputs:")
 important_extensions = ['.pt', '.png', '.json', '.csv', '.log']
 
 for item in Path('/kaggle/working').rglob('*'):
     if item.is_file() and item.suffix in important_extensions:
         print(f"  {item}")
 
-# Display some results
-import matplotlib.pyplot as plt
-
-# Try to load and display training history
+# Display training history plots
 history_files = list(Path('/kaggle/working').rglob('training_history.json'))
 if history_files:
     with open(history_files[0], 'r') as f:
         history = json.load(f)
     
     # Plot training curves
-    fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
     
     if 'train_loss' in history:
-        ax.plot(history['train_loss'], label='Train Loss')
+        ax1.plot(history['train_loss'], label='Train Loss')
     if 'val_loss' in history:
-        ax.plot(history['val_loss'], label='Val Loss')
-    ax.set_title('Training Progress')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Loss')
-    ax.legend()
-    ax.grid(True)
+        ax1.plot(history['val_loss'], label='Val Loss')
+    ax1.set_title('Training Loss')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Loss')
+    ax1.legend()
+    ax1.grid(True)
+    
+    if 'val_mean_iou' in history:
+        ax2.plot(history['val_mean_iou'], label='Val mIoU')
+    if 'val_dice' in history:
+        ax2.plot(history['val_dice'], label='Val Dice')
+    ax2.set_title('Validation Metrics')
+    ax2.set_xlabel('Epoch')
+    ax2.set_ylabel('Score')
+    ax2.legend()
+    ax2.grid(True)
     
     plt.tight_layout()
     plt.show()
 
-print("\\nNotebook execution complete!")
-print("\\nTo use this notebook:")
-print("1. Replace 'your-dataset' with your actual Kaggle dataset name")
-print("2. Replace the GitHub URL with your repository URL")
-print("3. Run all cells")
-print("4. Check the final_results folder for your trained models")
+# Display latest validation sample
+print("\n" + "="*50)
+print("LATEST VALIDATION SAMPLE")
+print("="*50)
+
+# Find the most recent run folder
+runs_dir = Path('/kaggle/working/ML_Framework/runs')
+if runs_dir.exists():
+    run_folders = [f for f in runs_dir.iterdir() if f.is_dir()]
+    if run_folders:
+        # Get the most recent run
+        latest_run = max(run_folders, key=lambda x: x.stat().st_mtime)
+        print(f"Latest run: {latest_run.name}")
+        
+        # Look for experiment folders within the run
+        experiment_folders = [f for f in latest_run.iterdir() if f.is_dir()]
+        if experiment_folders:
+            # Get the most recent experiment
+            latest_experiment = max(experiment_folders, key=lambda x: x.stat().st_mtime)
+            print(f"Latest experiment: {latest_experiment.name}")
+            
+            # Look for samples in the experiment folder
+            samples_dir = latest_experiment / 'samples'
+            if samples_dir.exists():
+                # Find validation sample files (files ending with _val.png)
+                val_sample_files = list(samples_dir.glob('*_val.png'))
+                
+                if val_sample_files:
+                    # Sort by modification time and get the latest
+                    latest_val_sample = max(val_sample_files, key=lambda x: x.stat().st_mtime)
+                    print(f"Latest validation sample: {latest_val_sample.name}")
+                    
+                    # Display the validation sample
+                    try:
+                        img = Image.open(latest_val_sample)
+                        plt.figure(figsize=(12, 8))
+                        plt.imshow(img)
+                        plt.title(f'Latest Validation Sample\n{latest_val_sample.name}')
+                        plt.axis('off')
+                        plt.show()
+                    except Exception as e:
+                        print(f"Error displaying image: {e}")
+                else:
+                    print("No validation sample files (*_val.png) found")
+                    
+                    # Debug: show what files are actually in the samples directory
+                    all_files = list(samples_dir.glob('*'))
+                    if all_files:
+                        print(f"Files found in samples directory ({len(all_files)}):")
+                        for file in all_files:
+                            print(f"  - {file.name}")
+                    else:
+                        print("No files found in samples directory")
+            else:
+                print("No samples directory found in latest experiment")
+                
+                # Debug: show what directories exist in the experiment
+                experiment_contents = list(latest_experiment.iterdir())
+                if experiment_contents:
+                    print(f"Contents of latest experiment:")
+                    for item in experiment_contents:
+                        print(f"  - {item.name} ({'dir' if item.is_dir() else 'file'})")
+        else:
+            print("No experiment folders found in latest run")
+    else:
+        print("No run folders found")
+else:
+    print("No runs directory found")
+
+print("\nNotebook execution complete!")
