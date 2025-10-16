@@ -131,7 +131,8 @@ def main():
             batch_size=dataloader_config.get('batch_size', 32),
             shuffle=False,
             num_workers=dataloader_config.get('num_workers', 4),
-            pin_memory=dataloader_config.get('pin_memory', True)
+            pin_memory=dataloader_config.get('pin_memory', True),
+            drop_last=dataloader_config.get('drop_last', False)
         )
         
         # Create model

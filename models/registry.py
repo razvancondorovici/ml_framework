@@ -7,6 +7,13 @@ from torchvision import models as tv_models
 from typing import Dict, Any, Optional, List, Tuple
 import warnings
 
+try:
+    import segmentation_models_pytorch as smp
+    SMP_AVAILABLE = True
+except ImportError:
+    SMP_AVAILABLE = False
+    warnings.warn("segmentation_models_pytorch not available. DeepLabV3Plus models will not be registered.")
+
 
 class ModelRegistry:
     """Registry for model architectures."""
@@ -39,6 +46,10 @@ class ModelRegistry:
         
         for model_name in timm_models:
             self._models[f'timm_{model_name}'] = self._create_timm_model(model_name)
+        
+        # Register DeepLabV3Plus models if SMP is available
+        if SMP_AVAILABLE:
+            self._register_smp_models()
     
     def _register_torchvision_models(self):
         """Register torchvision models."""
@@ -56,6 +67,35 @@ class ModelRegistry:
         for model_name in tv_models_list:
             self._models[f'tv_{model_name}'] = self._create_torchvision_model(model_name)
     
+    def _register_smp_models(self):
+        """Register segmentation-models-pytorch models."""
+        # DeepLabV3Plus encoders supported by SMP
+        deeplabv3plus_encoders = [
+            'resnet50', 'resnet101', 'resnet152',
+            'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3',
+            'efficientnet-b4', 'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7',
+            'densenet121', 'densenet161', 'densenet169', 'densenet201',
+            'mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
+            'regnetx_002', 'regnetx_004', 'regnetx_006', 'regnetx_008',
+            'regnety_002', 'regnety_004', 'regnety_006', 'regnety_008',
+            'timm-efficientnet-b0', 'timm-efficientnet-b1', 'timm-efficientnet-b2',
+            'timm-efficientnet-b3', 'timm-efficientnet-b4', 'timm-efficientnet-b5',
+            'timm-efficientnet-b6', 'timm-efficientnet-b7',
+            'timm-resnet50', 'timm-resnet101', 'timm-resnet152',
+            'timm-resnext50_32x4d', 'timm-resnext101_32x8d',
+            'timm-regnetx_002', 'timm-regnetx_004', 'timm-regnetx_006', 'timm-regnetx_008',
+            'timm-regnety_002', 'timm-regnety_004', 'timm-regnety_006', 'timm-regnety_008',
+            'timm-convnext_tiny', 'timm-convnext_small', 'timm-convnext_base', 'timm-convnext_large',
+            'timm-vit_tiny_patch16_224', 'timm-vit_small_patch16_224', 'timm-vit_base_patch16_224',
+            'timm-vit_large_patch16_224', 'timm-vit_huge_patch14_224',
+            'timm-swin_tiny_patch4_window7_224', 'timm-swin_small_patch4_window7_224',
+            'timm-swin_base_patch4_window7_224', 'timm-swin_large_patch4_window7_224'
+        ]
+        
+        # Register DeepLabV3Plus models
+        for encoder_name in deeplabv3plus_encoders:
+            self._models[f'smp_deeplabv3plus_{encoder_name}'] = self._create_smp_deeplabv3plus_model(encoder_name)
+    
     def _create_timm_model(self, model_name: str):
         """Create timm model factory."""
         def factory(num_classes: int, pretrained: bool = True, **kwargs):
@@ -72,6 +112,19 @@ class ModelRegistry:
         def factory(num_classes: int, pretrained: bool = True, **kwargs):
             model_fn = getattr(tv_models, model_name)
             return model_fn(pretrained=pretrained, num_classes=num_classes, **kwargs)
+        return factory
+    
+    def _create_smp_deeplabv3plus_model(self, encoder_name: str):
+        """Create SMP DeepLabV3Plus model factory."""
+        def factory(num_classes: int, pretrained: bool = True, in_channels: int = 3, **kwargs):
+            encoder_weights = "imagenet" if pretrained else None
+            return smp.DeepLabV3Plus(
+                encoder_name=encoder_name,
+                encoder_weights=encoder_weights,
+                in_channels=in_channels,
+                classes=num_classes,
+                **kwargs
+            )
         return factory
     
     def register(self, name: str, model_fn):
@@ -178,6 +231,7 @@ def build_segmentation_model(backbone: str,
                            num_classes: int,
                            pretrained: bool = True,
                            freeze_backbone: bool = False,
+                           in_channels: int = 3,
                            **kwargs) -> nn.Module:
     """Build a segmentation model.
     
@@ -186,13 +240,26 @@ def build_segmentation_model(backbone: str,
         num_classes: Number of output classes
         pretrained: Whether to use pretrained weights
         freeze_backbone: Whether to freeze backbone parameters
+        in_channels: Number of input channels (for SMP models)
         **kwargs: Additional arguments for model creation
         
     Returns:
         Segmentation model
     """
+    # Handle SMP DeepLabV3Plus models
+    if backbone.startswith('smp_deeplabv3plus_'):
+        if not SMP_AVAILABLE:
+            raise ImportError("segmentation_models_pytorch is required for SMP models. Install with: pip install segmentation-models-pytorch")
+        
+        model_fn = model_registry.get(backbone)
+        model = model_fn(
+            num_classes=num_classes,
+            pretrained=pretrained,
+            in_channels=in_channels,
+            **kwargs
+        )
     # For segmentation, we'll use timm's segmentation models
-    if backbone.startswith('timm_'):
+    elif backbone.startswith('timm_'):
         backbone_name = backbone[5:]  # Remove 'timm_' prefix
         
         # Check if it's a segmentation model

@@ -8,7 +8,8 @@ from torchmetrics import (
 )
 from torchmetrics.classification import (
     MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score,
-    MulticlassAUROC, MulticlassAveragePrecision, MulticlassConfusionMatrix
+    MulticlassAUROC, MulticlassAveragePrecision, MulticlassConfusionMatrix,
+    MulticlassJaccardIndex
 )
 from torchmetrics.regression import (
     MeanSquaredError, MeanAbsoluteError, R2Score
@@ -202,7 +203,7 @@ class SegmentationMetrics:
         metrics = {}
         
         # IoU (Intersection over Union)
-        metrics['iou'] = MulticlassAccuracy(
+        metrics['iou'] = MulticlassJaccardIndex(
             num_classes=self.num_classes,
             average='none'
         )
@@ -220,7 +221,7 @@ class SegmentationMetrics:
         )
         
         # Mean IoU
-        metrics['mean_iou'] = MulticlassAccuracy(
+        metrics['mean_iou'] = MulticlassJaccardIndex(
             num_classes=self.num_classes,
             average='macro'
         )

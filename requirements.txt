@@ -7,6 +7,7 @@ torchvision>=0.19.0
 
 # Model backbones and utilities
 timm>=1.0.8
+segmentation-models-pytorch>=0.5.0
 
 # Data augmentation
 albumentations>=1.4.14

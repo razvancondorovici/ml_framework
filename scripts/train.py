@@ -233,7 +233,8 @@ def main():
             shuffle=True,
             num_workers=dataloader_config.get('num_workers', 4),
             pin_memory=dataloader_config.get('pin_memory', True),
-            persistent_workers=dataloader_config.get('persistent_workers', True)
+            persistent_workers=dataloader_config.get('persistent_workers', True),
+            drop_last=dataloader_config.get('drop_last', False)
         )
         
         val_dataloader = None
@@ -244,7 +245,8 @@ def main():
                 shuffle=False,
                 num_workers=dataloader_config.get('num_workers', 4),
                 pin_memory=dataloader_config.get('pin_memory', True),
-                persistent_workers=dataloader_config.get('persistent_workers', True)
+                persistent_workers=dataloader_config.get('persistent_workers', True),
+                drop_last=dataloader_config.get('drop_last', False)
             )
         
         # Create model

@@ -2,15 +2,15 @@
 # Optimized for small dataset (15 images) with CPU training
 
 experiment:
-  name: segmentation_markers_finetune_v1
+  name: segmentation_markers_finetune
   seed: 42
 
 data:
   dataset_type: segmentation
-  data_dir: c:\Facultate\segmentation_markers\dataset\train\images #/kaggle/input/melanodet-markerssegmentation/dataset/train/images
-  mask_dir: c:\Facultate\segmentation_markers\dataset\train\masks #/kaggle/input/melanodet-markerssegmentation/dataset/train/masks
-  val_data_dir: c:\Facultate\segmentation_markers\dataset\val\images #/kaggle/input/melanodet-markerssegmentation/dataset/val/images
-  val_mask_dir: c:\Facultate\segmentation_markers\dataset\val\masks #/kaggle/input/melanodet-markerssegmentation/dataset/val/masks
+  data_dir: c:\Facultate\segmentation_markers\dataset\train\images
+  mask_dir: c:\Facultate\segmentation_markers\dataset\train\masks
+  val_data_dir: c:\Facultate\segmentation_markers\dataset\val\images
+  val_mask_dir: c:\Facultate\segmentation_markers\dataset\val\masks
   num_classes: 2  # Background and markers (binary segmentation)
   class_names: ['background', 'markers']
   mask_format: 'rgb'
@@ -24,17 +24,11 @@ dataloader:
   pin_memory: false # Disable for CPU
   persistent_workers: false
   prefetch_factor: 2
-  drop_last: true   # Drop the last incomplete batch to avoid size 1 batches
 
 model:
-  backbone: smp_deeplabv3plus_resnet50
+  backbone: timm_resnet50
   pretrained: true
   freeze_backbone: false  # Fine-tune the entire model
-  in_channels: 3
-  # DeepLabV3Plus specific parameters
-  encoder_depth: 5
-  decoder_channels: 256
-  upsampling: 4
 
 loss:
   name: combined
@@ -95,7 +89,7 @@ callbacks:
     enabled: true
 
 transforms:
-  resize: 512      # Larger input size for DeepLabV3Plus (minimum recommended)
+  resize: 256      # Smaller input size for CPU training
   horizontal_flip: true
   vertical_flip: false
   rotation: 10
