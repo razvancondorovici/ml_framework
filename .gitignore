@@ -36,3 +36,4 @@ tmp/
 *.yaml.bak
 *.yml.bak
 
+logs/training.jsonl
