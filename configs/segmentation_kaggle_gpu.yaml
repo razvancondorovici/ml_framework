@@ -8,7 +8,7 @@ experiment:
 data:
   dataset_type: segmentation
   # Kaggle input paths - replace 'your-dataset' with your actual dataset name
-  data_dir: /kaggleQ/input/melanodet-markerssegmentation/dataset/train/images
+  data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/images
   mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/masks
   val_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/images
   val_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/masks
