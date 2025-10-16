@@ -5,6 +5,7 @@ import torch.nn as nn
 from typing import Dict, Any, Optional, List, Union, Literal
 import numpy as np
 
+
 # Try to import torchmetrics, fallback to simple implementation if not available
 try:
     from torchmetrics import (
@@ -26,6 +27,13 @@ except ImportError:
     # Import fallback implementation
     from .kaggle_compatible import KaggleCompatibleMetrics, create_metrics as create_kaggle_metrics
 
+# Import KaggleCompatibleMetrics for type hints regardless of torchmetrics availability
+try:
+    from .kaggle_compatible import KaggleCompatibleMetrics
+except ImportError:
+    # If we can't import it, create a dummy class for type hints
+    class KaggleCompatibleMetrics:
+        pass
 
 class MetricsWrapper:
     """Wrapper for torchmetrics with consistent interface."""
