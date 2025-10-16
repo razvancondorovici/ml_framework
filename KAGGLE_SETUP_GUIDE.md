@@ -37,7 +37,19 @@ This guide will help you run your ML Framework on Kaggle with GPU acceleration.
 
 ## Step 3: Setup Notebook
 
-### Option A: Use the Template (Recommended)
+### Option A: Use the Simplified Template (Recommended)
+
+**If you encounter package conflicts**, use the simplified template from `kaggle_notebook_simple.py`:
+
+1. **Cell 1**: Environment setup and dependencies (with conflict-free package versions)
+2. **Cell 2**: Clone repository and setup framework  
+3. **Cell 3**: Setup Kaggle environment
+4. **Cell 4**: Create Kaggle configuration
+5. **Cell 5**: Run training (with fallback metrics)
+6. **Cell 6**: Alternative manual training (if framework fails)
+7. **Cell 7**: Save and display results
+
+### Option B: Use the Full Template
 
 Copy the code from `kaggle_notebook_template.py` into your notebook cells:
 
@@ -124,22 +136,31 @@ The framework automatically converts Windows paths to Kaggle paths:
 
 ### Common Issues:
 
-1. **Dataset not found**:
+1. **Package Import Errors (torchmetrics/transformers conflict)**:
+   ```
+   ImportError: cannot import name 'GenerationMixin' from 'transformers.generation'
+   ```
+   **Solution**: Use the simplified notebook template (`kaggle_notebook_simple.py`) which avoids torchmetrics conflicts:
+   - The framework now includes a fallback metrics implementation
+   - Use specific package versions to avoid conflicts
+   - If issues persist, the notebook includes a manual training approach
+
+2. **Dataset not found**:
    - Check dataset name in configuration
    - Verify dataset is public or you have access
    - Check folder structure matches expected format
 
-2. **GPU not detected**:
+3. **GPU not detected**:
    - Ensure GPU is enabled in notebook settings
    - Restart notebook after enabling GPU
    - Check CUDA availability with `torch.cuda.is_available()`
 
-3. **Out of memory**:
+4. **Out of memory**:
    - Reduce batch size in configuration
    - Enable gradient accumulation
    - Use smaller input image size
 
-4. **Training timeout**:
+5. **Training timeout**:
    - Reduce number of epochs
    - Enable early stopping
    - Save checkpoints more frequently

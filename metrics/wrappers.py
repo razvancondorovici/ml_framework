@@ -1,21 +1,30 @@
-"""Metrics wrappers using torchmetrics."""
+"""Metrics wrappers using torchmetrics with Kaggle compatibility."""
 
 import torch
 import torch.nn as nn
-from torchmetrics import (
-    Accuracy, Precision, Recall, F1Score, AUROC, AveragePrecision,
-    ConfusionMatrix, MeanSquaredError, MeanAbsoluteError
-)
-from torchmetrics.classification import (
-    MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score,
-    MulticlassAUROC, MulticlassAveragePrecision, MulticlassConfusionMatrix,
-    MulticlassJaccardIndex
-)
-from torchmetrics.regression import (
-    MeanSquaredError, MeanAbsoluteError, R2Score
-)
 from typing import Dict, Any, Optional, List, Union, Literal
 import numpy as np
+
+# Try to import torchmetrics, fallback to simple implementation if not available
+try:
+    from torchmetrics import (
+        Accuracy, Precision, Recall, F1Score, AUROC, AveragePrecision,
+        ConfusionMatrix, MeanSquaredError, MeanAbsoluteError
+    )
+    from torchmetrics.classification import (
+        MulticlassAccuracy, MulticlassPrecision, MulticlassRecall, MulticlassF1Score,
+        MulticlassAUROC, MulticlassAveragePrecision, MulticlassConfusionMatrix,
+        MulticlassJaccardIndex
+    )
+    from torchmetrics.regression import (
+        MeanSquaredError, MeanAbsoluteError, R2Score
+    )
+    TORCHMETRICS_AVAILABLE = True
+except ImportError:
+    print("Warning: torchmetrics not available, using simple fallback implementation")
+    TORCHMETRICS_AVAILABLE = False
+    # Import fallback implementation
+    from .kaggle_compatible import KaggleCompatibleMetrics, create_metrics as create_kaggle_metrics
 
 
 class MetricsWrapper:
@@ -332,7 +341,7 @@ class RegressionMetrics:
             metric.to(device)
 
 
-def create_metrics(config: Dict[str, Any]) -> Union[MetricsWrapper, SegmentationMetrics, RegressionMetrics]:
+def create_metrics(config: Dict[str, Any]) -> Union[MetricsWrapper, SegmentationMetrics, RegressionMetrics, KaggleCompatibleMetrics]:
     """Create metrics from configuration.
     
     Args:
@@ -341,6 +350,10 @@ def create_metrics(config: Dict[str, Any]) -> Union[MetricsWrapper, Segmentation
     Returns:
         Metrics instance
     """
+    # Use fallback implementation if torchmetrics is not available
+    if not TORCHMETRICS_AVAILABLE:
+        return create_kaggle_metrics(config)
+    
     task = config.get('task', 'multiclass')
     num_classes = config.get('num_classes', 10)
     

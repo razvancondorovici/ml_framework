@@ -17,8 +17,12 @@ if torch.cuda.is_available():
     print(f"GPU name: {torch.cuda.get_device_name(0)}")
     print(f"GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-# Install required packages
-!pip install timm segmentation-models-pytorch albumentations torchmetrics omegaconf
+# Install required packages with specific versions to avoid conflicts
+!pip install --upgrade pip
+!pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121
+!pip install timm==0.9.12 segmentation-models-pytorch==0.3.3 albumentations==1.3.1
+!pip install omegaconf==2.3.0 PyYAML==6.0.1
+!pip install torchmetrics==1.2.0  # Use older version to avoid transformers conflict
 
 # =============================================================================
 # CELL 2: Clone Repository and Setup Framework
