@@ -47,20 +47,37 @@ class SampleVisualizer(Callback):
         if not self.trainer or epoch % self.save_every_n_epochs != 0:
             return
         
-        # Get validation data
-        val_dataloader = getattr(self.trainer, 'val_dataloader', None)
-        if val_dataloader is None:
-            return
-        
         # Get model and device
         model = self.trainer.model
         device = next(model.parameters()).device
         model.eval()
         
+        # Create visualizations for both training and validation sets
+        self._create_dataset_visualization(model, device, epoch, 'train')
+        self._create_dataset_visualization(model, device, epoch, 'val')
+    
+    def _create_dataset_visualization(self, model, device, epoch: int, dataset_type: str):
+        """Create visualization for a specific dataset (train or val).
+        
+        Args:
+            model: The model to use for predictions
+            device: Device to run inference on
+            epoch: Current epoch number
+            dataset_type: 'train' or 'val'
+        """
+        # Get the appropriate dataloader
+        if dataset_type == 'train':
+            dataloader = getattr(self.trainer, 'train_dataloader', None)
+        else:  # val
+            dataloader = getattr(self.trainer, 'val_dataloader', None)
+            
+        if dataloader is None:
+            return
+        
         # Collect samples
         samples = []
         with torch.no_grad():
-            for batch_idx, (images, targets) in enumerate(val_dataloader):
+            for batch_idx, (images, targets) in enumerate(dataloader):
                 if len(samples) >= self.num_samples:
                     break
                 
@@ -90,15 +107,16 @@ class SampleVisualizer(Callback):
         if not samples:
             return
         
-        # Create visualization
-        self._create_visualization(samples, epoch)
+        # Create visualization with dataset type suffix
+        self._create_visualization(samples, epoch, dataset_type)
     
-    def _create_visualization(self, samples: List[Dict[str, torch.Tensor]], epoch: int):
+    def _create_visualization(self, samples: List[Dict[str, torch.Tensor]], epoch: int, dataset_type: str = 'val'):
         """Create visualization for samples.
         
         Args:
             samples: List of sample dictionaries
             epoch: Current epoch number
+            dataset_type: 'train' or 'val' for filename suffix
         """
         # Extract data
         images = torch.stack([s['image'] for s in samples])
@@ -111,15 +129,13 @@ class SampleVisualizer(Callback):
         preds_np = preds.numpy()
         
         # Check if this is segmentation or classification
-        if images.dim() == 4 and images.size(1) == 3:  # RGB images
-            # Classification
-            self._create_classification_visualization(images_np, targets_np, preds_np, epoch)
-        else:
-            # Segmentation
-            self._create_segmentation_visualization(images_np, targets_np, preds_np, epoch)
+        if preds.dim() == 3:  # Segmentation: (N, H, W)
+            self._create_segmentation_visualization(images_np, targets_np, preds_np, epoch, dataset_type)
+        else:  # Classification: (N,)
+            self._create_classification_visualization(images_np, targets_np, preds_np, epoch, dataset_type)
     
     def _create_classification_visualization(self, images: np.ndarray, targets: np.ndarray, 
-                                           preds: np.ndarray, epoch: int):
+                                           preds: np.ndarray, epoch: int, dataset_type: str = 'val'):
         """Create classification visualization.
         
         Args:
@@ -127,6 +143,7 @@ class SampleVisualizer(Callback):
             targets: Target labels (N,)
             preds: Predicted labels (N,)
             epoch: Current epoch number
+            dataset_type: 'train' or 'val' for filename suffix
         """
         # Convert images to display format
         if images.shape[1] == 3:  # RGB
@@ -140,19 +157,19 @@ class SampleVisualizer(Callback):
         images_display = np.clip(images_display, 0, 1)
         
         # Create visualization
-        save_path = self.save_dir / f'epoch_{epoch:03d}_samples.png'
+        save_path = self.save_dir / f'epoch_{epoch:03d}_samples_{dataset_type}.png'
         plot_sample_grid(
             images=images_display,
             labels=targets,
             predictions=preds,
             class_names=self.class_names,
             save_path=save_path,
-            title=f'Training Samples - Epoch {epoch}',
+            title=f'{dataset_type.title()} Samples - Epoch {epoch}',
             max_samples=self.num_samples
         )
     
     def _create_segmentation_visualization(self, images: np.ndarray, targets: np.ndarray,
-                                         preds: np.ndarray, epoch: int):
+                                         preds: np.ndarray, epoch: int, dataset_type: str = 'val'):
         """Create segmentation visualization.
         
         Args:
@@ -160,6 +177,7 @@ class SampleVisualizer(Callback):
             targets: Target masks (N, H, W)
             preds: Predicted masks (N, H, W)
             epoch: Current epoch number
+            dataset_type: 'train' or 'val' for filename suffix
         """
         # Convert images to display format
         if images.shape[1] == 3:  # RGB
@@ -172,16 +190,41 @@ class SampleVisualizer(Callback):
         # Normalize images
         images_display = np.clip(images_display, 0, 1)
         
-        # Create visualization for each sample
-        for i in range(min(len(samples), 4)):  # Show first 4 samples
-            save_path = self.save_dir / f'epoch_{epoch:03d}_sample_{i:02d}.png'
-            plot_segmentation_overlay(
-                image=images_display[i],
-                mask=targets[i],
-                prediction=preds[i],
-                save_path=save_path,
-                title=f'Segmentation Sample {i} - Epoch {epoch}'
-            )
+        # Calculate grid dimensions: each sample has 3 columns (Input, GT, Pred)
+        n_samples = min(len(images_display), self.num_samples)
+        n_cols = 3  # Input | Ground Truth | Prediction
+        n_rows = n_samples
+        
+        # Create figure with subplots
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
+        if n_rows == 1:
+            axes = axes.reshape(1, -1)
+        
+        # Add column headers
+        fig.suptitle(f'{dataset_type.title()} Segmentation Samples - Epoch {epoch}', fontsize=16, fontweight='bold')
+        
+        # Create each sample row
+        for i in range(n_samples):
+            # Input image
+            axes[i, 0].imshow(images_display[i], cmap='gray' if len(images_display[i].shape) == 2 else None)
+            axes[i, 0].set_title('Input Image' if i == 0 else '')
+            axes[i, 0].axis('off')
+            
+            # Ground truth mask
+            axes[i, 1].imshow(targets[i], cmap='tab10')
+            axes[i, 1].set_title('Ground Truth' if i == 0 else '')
+            axes[i, 1].axis('off')
+            
+            # Predicted mask
+            axes[i, 2].imshow(preds[i], cmap='tab10')
+            axes[i, 2].set_title('Prediction' if i == 0 else '')
+            axes[i, 2].axis('off')
+        
+        # Save the visualization
+        save_path = self.save_dir / f'epoch_{epoch:03d}_samples_{dataset_type}.png'
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        plt.close()
 
 
 class ConfusionMatrixVisualizer(Callback):

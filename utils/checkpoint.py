@@ -216,8 +216,12 @@ def cleanup_old_checkpoints(checkpoint_dir: Union[str, Path],
     
     # Remove old checkpoints
     for checkpoint in sorted_checkpoints[keep_last:]:
-        checkpoint.unlink()
-        print(f"Removed old checkpoint: {checkpoint}")
+        try:
+            checkpoint.unlink()
+            print(f"Removed old checkpoint: {checkpoint}")
+        except FileNotFoundError:
+            # File already deleted by another process
+            print(f"Checkpoint already deleted: {checkpoint}")
 
 
 def copy_checkpoint(src_path: Union[str, Path], 

@@ -17,7 +17,7 @@ class ModelCheckpoint(Callback):
                  save_top_k: int = 3,
                  save_last: bool = True,
                  save_best: bool = True,
-                 filename: str = 'epoch_{epoch:03d}_{monitor:.4f}',
+                 filename: str = 'epoch_{epoch:03d}_{monitor:.4f}.pt',
                  save_optimizer: bool = True,
                  save_scheduler: bool = True,
                  save_scaler: bool = True):
@@ -121,11 +121,14 @@ class ModelCheckpoint(Callback):
                     worst_idx = min(range(len(self.best_models)), key=lambda i: self.best_models[i]['score'])
                 
                 worst_model = self.best_models.pop(worst_idx)
-                worst_model['path'].unlink()  # Delete file
+                try:
+                    worst_model['path'].unlink()  # Delete file
+                except FileNotFoundError:
+                    # File already deleted by another process or cleanup function
+                    pass
         
-        # Clean up old checkpoints
-        if self.save_top_k > 0:
-            cleanup_old_checkpoints(self.checkpoint_dir, keep_last=self.save_top_k)
+        # Note: We don't call cleanup_old_checkpoints here because ModelCheckpoint
+        # already manages the top-k models based on performance above
         
         self.last_epoch = epoch
     

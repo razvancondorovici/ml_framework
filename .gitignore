@@ -14,6 +14,7 @@ venv/
 # ML Framework specific
 runs/
 data/
+logs/
 *.pth
 *.pt
 *.pkl
@@ -34,3 +35,4 @@ tmp/
 *.json
 *.yaml.bak
 *.yml.bak
+

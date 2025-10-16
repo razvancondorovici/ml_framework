@@ -100,34 +100,7 @@ class Trainer:
     def _setup_callbacks(self, callbacks: Optional[List[Callable]]):
         """Set up callbacks."""
         # Default callbacks
-        default_callbacks = [
-            ModelCheckpoint(
-                checkpoint_dir=self.config.get('checkpoint_dir', 'checkpoints'),
-                monitor=self.config.get('monitor_metric', 'val_loss'),
-                mode=self.config.get('monitor_mode', 'min'),
-                save_top_k=self.config.get('save_top_k', 3),
-                save_last=True,
-                save_best=True
-            ),
-            EarlyStopping(
-                monitor=self.config.get('monitor_metric', 'val_loss'),
-                mode=self.config.get('monitor_mode', 'min'),
-                patience=self.config.get('patience', 10),
-                restore_best_weights=True
-            ),
-            MetricLogger(
-                log_dir=self.config.get('log_dir', 'logs'),
-                log_every_n_epochs=1,
-                log_every_n_steps=100
-            ),
-            ProgressLogger(
-                log_every_n_epochs=1,
-                log_every_n_steps=100
-            ),
-            ModelSummaryLogger(
-                log_dir=self.config.get('log_dir', 'logs')
-            )
-        ]
+        default_callbacks = []
         
         # Add custom callbacks
         if callbacks:
