@@ -77,16 +77,16 @@ metrics:
 
 callbacks:
   checkpoint:
-    monitor: val_dice
-    mode: max
+    monitor: val_loss
+    mode: min
     save_top_k: 1    # Reduced to save space (was 3)
     enabled: true
     save_last: true
     save_best: true
   
   early_stopping:
-    monitor: val_dice
-    mode: max
+    monitor: val_loss
+    mode: min
     patience: 20      # Reduced patience for faster convergence (was 10)
     enabled: true
   
