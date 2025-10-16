@@ -14,6 +14,14 @@ from utils.config import load_config, setup_experiment, get_config_parser
 from utils.device import get_device_info
 from utils.logger import StructuredLogger
 from utils.seed import set_seed
+
+# Import Kaggle utilities if available
+try:
+    from utils.kaggle_utils import is_kaggle_environment, setup_kaggle_environment, print_kaggle_info
+except ImportError:
+    is_kaggle_environment = lambda: False
+    setup_kaggle_environment = lambda: None
+    print_kaggle_info = lambda: None
 from datasets.classification import create_classification_dataset
 from datasets.segmentation import create_segmentation_dataset
 from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
@@ -195,6 +203,13 @@ def main():
     parser.add_argument('--resume', type=str, help='Path to checkpoint to resume from')
     parser.add_argument('--device', type=str, help='Device to train on (cuda, cpu)')
     args = parser.parse_args()
+    
+    # Setup Kaggle environment if running in Kaggle
+    if is_kaggle_environment():
+        print("Detected Kaggle environment - setting up...")
+        working_dir = setup_kaggle_environment()
+        print_kaggle_info()
+        print(f"Kaggle working directory: {working_dir}")
     
     # Load configuration
     config = load_config(args.config, args.overrides)

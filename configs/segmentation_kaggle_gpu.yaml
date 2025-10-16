@@ -1,0 +1,114 @@
+# Kaggle GPU Optimized Configuration for Segmentation
+# Based on segmentation_finetune_cpu.yaml but optimized for Kaggle GPU environment
+
+experiment:
+  name: segmentation_kaggle_gpu
+  seed: 42
+
+data:
+  dataset_type: segmentation
+  # Kaggle input paths - replace 'your-dataset' with your actual dataset name
+  data_dir: /kaggle/input/your-dataset/dataset/train/images
+  mask_dir: /kaggle/input/your-dataset/dataset/train/masks
+  val_data_dir: /kaggle/input/your-dataset/dataset/val/images
+  val_mask_dir: /kaggle/input/your-dataset/dataset/val/masks
+  num_classes: 2  # Background and markers (binary segmentation)
+  class_names: ['background', 'markers']
+  mask_format: 'rgb'
+  train_split: 1.0  # Use all training data
+  val_split: 1.0    # Use all validation data
+  test_split: 0.0
+
+dataloader:
+  batch_size: 16     # Increased for GPU (was 2 for CPU)
+  num_workers: 2     # Limited CPU cores on Kaggle (was 0)
+  pin_memory: true   # Enable for GPU (was false)
+  persistent_workers: true  # Enable for GPU (was false)
+  prefetch_factor: 2
+  drop_last: true    # Drop the last incomplete batch
+
+model:
+  backbone: smp_deeplabv3plus_resnet50
+  pretrained: true
+  freeze_backbone: false  # Fine-tune the entire model
+  in_channels: 3
+  # DeepLabV3Plus specific parameters
+  encoder_depth: 5
+  decoder_channels: 256
+  upsampling: 4
+
+loss:
+  name: combined
+  ce_weight: 1.0
+  dice_weight: 1.0
+  focal_weight: 0.0
+  lovasz_weight: 0.0
+  ignore_index: 255
+
+optimizer:
+  name: adamw
+  lr: 1e-4  # Slightly higher learning rate for GPU (was 5e-5)
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+scheduler:
+  name: cosine_warmup
+  warmup_epochs: 5   # Increased warmup for GPU (was 2)
+  total_epochs: 30   # Reduced for Kaggle time limits (was 50)
+  min_lr: 1e-6
+
+training:
+  epochs: 30         # Reduced for Kaggle time limits (was 50)
+  amp: true          # Enable AMP for GPU (was false)
+  gradient_clip_norm: 1.0
+  gradient_accumulation_steps: 1  # Reduced for GPU (was 4)
+
+metrics:
+  task: segmentation
+  num_classes: 2
+  ignore_index: 255
+
+callbacks:
+  checkpoint:
+    monitor: val_loss
+    mode: min
+    save_top_k: 2    # Reduced to save space (was 3)
+    enabled: true
+    save_last: true
+    save_best: true
+  
+  early_stopping:
+    monitor: val_loss
+    mode: min
+    patience: 8      # Reduced patience for faster convergence (was 10)
+    enabled: true
+  
+  sample_visualizer:
+    num_samples: 4
+    save_every_n_epochs: 10  # Less frequent to save time (was 5)
+    enabled: true
+  
+  confusion_matrix:
+    save_every_n_epochs: 15  # Less frequent to save time (was 5)
+    enabled: true
+  
+  learning_rate:
+    save_every_n_epochs: 10  # Less frequent to save time (was 5)
+    enabled: true
+
+transforms:
+  resize: 512      # Keep larger input size for DeepLabV3Plus
+  horizontal_flip: true
+  vertical_flip: false
+  rotation: 15     # Slightly increased rotation (was 10)
+  shift_scale_rotate: true
+  elastic_transform: false  # Keep disabled to save compute time
+  grid_distortion: false
+  color_jitter: true
+  gaussian_noise: false    # Keep disabled to save compute time
+  gaussian_blur: false
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  use_albumentations: true

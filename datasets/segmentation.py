@@ -10,6 +10,13 @@ from PIL import Image
 import numpy as np
 import cv2
 
+# Import Kaggle utilities if available
+try:
+    from utils.kaggle_utils import is_kaggle_environment, get_kaggle_paths
+except ImportError:
+    is_kaggle_environment = lambda: False
+    get_kaggle_paths = lambda: {}
+
 
 class SegmentationDataset(Dataset):
     """Image segmentation dataset.
@@ -38,6 +45,11 @@ class SegmentationDataset(Dataset):
             transform: Image transformations
             target_transform: Target transformations
         """
+        # Handle Kaggle environment paths
+        if is_kaggle_environment():
+            data_dir = str(data_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+            mask_dir = str(mask_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+        
         self.data_dir = Path(data_dir)
         self.mask_dir = Path(mask_dir)
         self.mask_format = mask_format
@@ -227,6 +239,19 @@ def create_segmentation_dataset(config: Dict[str, Any]) -> Dataset:
     """
     data_dir = config['data_dir']
     mask_dir = config['mask_dir']
+    
+    # Handle Kaggle environment paths
+    if is_kaggle_environment():
+        # Convert Windows paths to Kaggle paths
+        data_dir = str(data_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+        mask_dir = str(mask_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+        
+        # Handle validation paths if they exist
+        if 'val_data_dir' in config:
+            config['val_data_dir'] = str(config['val_data_dir']).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+        if 'val_mask_dir' in config:
+            config['val_mask_dir'] = str(config['val_mask_dir']).replace('c:\\', '/kaggle/input/').replace('\\', '/')
+    
     annotations_file = config.get('annotations_file')
     class_names = config.get('class_names')
     color_mapping = config.get('color_mapping')
