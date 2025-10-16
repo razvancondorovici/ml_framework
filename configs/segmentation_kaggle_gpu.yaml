@@ -20,7 +20,7 @@ data:
   test_split: 0.0
 
 dataloader:
-  batch_size: 16     # Increased for GPU (was 2 for CPU)
+  batch_size: 2     # Increased for GPU (was 2 for CPU)
   num_workers: 2     # Limited CPU cores on Kaggle (was 0)
   pin_memory: true   # Enable for GPU (was false)
   persistent_workers: true  # Enable for GPU (was false)
