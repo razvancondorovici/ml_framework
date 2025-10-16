@@ -45,8 +45,7 @@ loss:
   dice_weight: 1.0
   focal_weight: 0.5
   lovasz_weight: 0.3
-  tversky_alpha: 0.3
-  tversky_beta: 0.7
+  tversky_weight: 0.2
   ignore_index: 255
 
 optimizer:

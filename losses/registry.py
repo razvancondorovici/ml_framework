@@ -361,6 +361,9 @@ class CombinedLoss(nn.Module):
                  dice_weight: float = 1.0,
                  focal_weight: float = 0.0,
                  lovasz_weight: float = 0.0,
+                 tversky_weight: float = 0.0,
+                 tversky_alpha: float = 0.3,
+                 tversky_beta: float = 0.7,
                  **kwargs):
         """Initialize Combined Loss.
         
@@ -369,6 +372,9 @@ class CombinedLoss(nn.Module):
             dice_weight: Weight for Dice loss
             focal_weight: Weight for Focal loss
             lovasz_weight: Weight for Lovász loss
+            tversky_weight: Weight for Tversky loss
+            tversky_alpha: Alpha parameter for Tversky loss
+            tversky_beta: Beta parameter for Tversky loss
             **kwargs: Additional arguments for loss functions
         """
         super().__init__()
@@ -376,11 +382,16 @@ class CombinedLoss(nn.Module):
         self.dice_weight = dice_weight
         self.focal_weight = focal_weight
         self.lovasz_weight = lovasz_weight
+        self.tversky_weight = tversky_weight
         
-        self.ce_loss = nn.CrossEntropyLoss(**kwargs)
-        self.dice_loss = DiceLoss(**kwargs)
-        self.focal_loss = FocalLoss(**kwargs) if focal_weight > 0 else None
+        # Filter out Tversky-specific parameters from kwargs for other losses
+        ce_kwargs = {k: v for k, v in kwargs.items() if k not in ['tversky_alpha', 'tversky_beta']}
+        
+        self.ce_loss = nn.CrossEntropyLoss(**ce_kwargs)
+        self.dice_loss = DiceLoss(**ce_kwargs)
+        self.focal_loss = FocalLoss(**ce_kwargs) if focal_weight > 0 else None
         self.lovasz_loss = LovaszLoss() if lovasz_weight > 0 else None
+        self.tversky_loss = TverskyLoss(alpha=tversky_alpha, beta=tversky_beta) if tversky_weight > 0 else None
     
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Forward pass.
@@ -413,6 +424,11 @@ class CombinedLoss(nn.Module):
         if self.lovasz_weight > 0 and self.lovasz_loss is not None:
             lovasz_loss = self.lovasz_loss(inputs, targets)
             total_loss += self.lovasz_weight * lovasz_loss
+        
+        # Tversky loss
+        if self.tversky_weight > 0 and self.tversky_loss is not None:
+            tversky_loss = self.tversky_loss(inputs, targets)
+            total_loss += self.tversky_weight * tversky_loss
         
         return total_loss
 
