@@ -8,10 +8,10 @@ experiment:
 data:
   dataset_type: segmentation
   # Kaggle input paths - replace 'your-dataset' with your actual dataset name
-  data_dir: /kaggle/input/your-dataset/dataset/train/images
-  mask_dir: /kaggle/input/your-dataset/dataset/train/masks
-  val_data_dir: /kaggle/input/your-dataset/dataset/val/images
-  val_mask_dir: /kaggle/input/your-dataset/dataset/val/masks
+  data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/images
+  mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/masks
+  val_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/images
+  val_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/masks
   num_classes: 2  # Background and markers (binary segmentation)
   class_names: ['background', 'markers']
   mask_format: 'rgb'
