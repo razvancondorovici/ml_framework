@@ -152,6 +152,12 @@ class SegmentationDataset(Dataset):
             # Convert RGB mask to indexed mask
             mask = self._rgb_to_indexed(mask)
         
+        # Handle common mask formats for binary segmentation
+        # Convert 255 (ignore_index) to 1 (foreground class)
+        if self.mask_format == 'indexed' and len(self.class_names) == 2:
+            # For binary segmentation, convert 255 to 1
+            mask = np.where(mask == 255, 1, mask)
+        
         return mask
     
     def _rgb_to_indexed(self, mask: np.ndarray) -> np.ndarray:

@@ -253,12 +253,23 @@ class LovaszLoss(nn.Module):
         # Compute Lovász loss for each class
         lovasz_losses = []
         for c in range(inputs.size(1)):
-            class_inputs = inputs_flat[:, c, :]
-            class_targets = (targets_flat == c).float()
+            class_inputs = inputs_flat[:, c, :]  # (N, H*W)
+            class_targets = (targets_flat == c).float()  # (N, H*W)
             
             if class_targets.sum() > 0:
-                lovasz_loss = self._lovasz_hinge(class_inputs, class_targets)
-                lovasz_losses.append(lovasz_loss)
+                # Process each sample in the batch separately
+                batch_losses = []
+                for b in range(inputs.size(0)):
+                    sample_inputs = class_inputs[b]  # (H*W,)
+                    sample_targets = class_targets[b]  # (H*W,)
+                    
+                    if sample_targets.sum() > 0:
+                        sample_loss = self._lovasz_hinge(sample_inputs, sample_targets)
+                        batch_losses.append(sample_loss)
+                
+                if batch_losses:
+                    class_loss = torch.stack(batch_losses).mean()
+                    lovasz_losses.append(class_loss)
         
         if not lovasz_losses:
             return torch.tensor(0.0, device=inputs.device, requires_grad=True)
@@ -277,11 +288,15 @@ class LovaszLoss(nn.Module):
         if len(labels) == 0:
             return logits.sum() * 0
         
-        signs = 2.0 * labels - 1.0
-        errors = 1.0 - logits * signs
-        errors_sorted, perm = torch.sort(errors, dim=0, descending=True)
+        # Flatten to 1D for Lovasz computation
+        logits_flat = logits.view(-1)
+        labels_flat = labels.view(-1)
+        
+        signs = 2.0 * labels_flat - 1.0
+        errors = 1.0 - logits_flat * signs
+        errors_sorted, perm = torch.sort(errors, descending=True)
         perm = perm.data
-        gt_sorted = labels[perm]
+        gt_sorted = labels_flat[perm]
         grad = self._lovasz_grad(gt_sorted)
         loss = torch.dot(F.relu(errors_sorted), grad)
         return loss
