@@ -3,7 +3,7 @@
 from .seed import set_seed
 from .device import get_device
 from .config import load_config, create_run_folder, save_config
-from .logger import MetricLogger, ScalarLogger
+from .logger import StructuredLogger
 from .plotting import (
     plot_loss_curves,
     plot_metric_curves,
@@ -28,8 +28,7 @@ __all__ = [
     'load_config',
     'create_run_folder',
     'save_config',
-    'MetricLogger',
-    'ScalarLogger',
+    'StructuredLogger',
     'plot_loss_curves',
     'plot_metric_curves', 
     'plot_lr_curve',

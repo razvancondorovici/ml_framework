@@ -272,10 +272,30 @@ def plot_sample_grid(images: np.ndarray, labels: np.ndarray, predictions: np.nda
         
         axes[row, col].imshow(img, cmap='gray' if len(img.shape) == 2 else None)
         
-        true_label = class_names[labels[i]] if class_names else str(labels[i])
-        pred_label = class_names[predictions[i]] if class_names else str(predictions[i])
+        # Handle both scalar and array labels/predictions
+        true_val = labels[i]
+        pred_val = predictions[i]
         
-        color = 'green' if labels[i] == predictions[i] else 'red'
+        # If they're arrays, convert to scalar for comparison
+        if hasattr(true_val, 'item') and hasattr(true_val, 'size') and true_val.size == 1:
+            true_val = true_val.item()
+        elif hasattr(true_val, 'mean'):
+            # For multi-element arrays, take mean or mode
+            true_val = int(true_val.mean().round())
+            
+        if hasattr(pred_val, 'item') and hasattr(pred_val, 'size') and pred_val.size == 1:
+            pred_val = pred_val.item()
+        elif hasattr(pred_val, 'argmax'):
+            # For segmentation predictions, take argmax
+            pred_val = pred_val.argmax()
+        elif hasattr(pred_val, 'mean'):
+            # For multi-element arrays, take mean or mode
+            pred_val = int(pred_val.mean().round())
+        
+        true_label = class_names[true_val] if class_names else str(true_val)
+        pred_label = class_names[pred_val] if class_names else str(pred_val)
+        
+        color = 'green' if true_val == pred_val else 'red'
         axes[row, col].set_title(f'True: {true_label}\nPred: {pred_label}', 
                                 color=color, fontweight='bold')
         axes[row, col].axis('off')

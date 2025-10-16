@@ -1,0 +1,283 @@
+{"timestamp": "2025-10-15T20:16:22.142497", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:16:22.158896", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:16:22.625429", "level": "ERROR", "message": "Training failed with error: AlbumentationsSegmentationTransform.__call__() missing 1 required positional argument: 'mask'"}
+{"timestamp": "2025-10-15T20:16:22.629845", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:18:35.994725", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:18:36.024782", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:18:36.138788", "level": "ERROR", "message": "Training failed with error: expected np.ndarray (got Tensor)"}
+{"timestamp": "2025-10-15T20:18:36.138788", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:20:50.332615", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:20:50.340913", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:20:52.293783", "level": "ERROR", "message": "Training failed with error: Expected 3D (unbatched) or 4D (batched) input to conv_transpose2d, but got input of size: [2, 1000]"}
+{"timestamp": "2025-10-15T20:20:52.296087", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:21:48.407083", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:21:48.417222", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:21:50.654248", "level": "ERROR", "message": "Training failed with error: Target 255 is out of bounds."}
+{"timestamp": "2025-10-15T20:21:50.656262", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:23:13.144765", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:23:13.152971", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:23:15.617304", "level": "ERROR", "message": "Training failed with error: Class values must be smaller than num_classes."}
+{"timestamp": "2025-10-15T20:23:15.621314", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:25:04.052993", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:25:04.061754", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:25:09.036290", "level": "ERROR", "message": "Training failed with error: name 'kwargs' is not defined"}
+{"timestamp": "2025-10-15T20:25:09.037515", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:26:09.187796", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:26:09.199059", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:26:13.794554", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:26:39.870370", "level": "ERROR", "message": "Training failed with error: a Tensor with 2 elements cannot be converted to Scalar"}
+{"timestamp": "2025-10-15T20:26:39.873036", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:28:17.513848", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:28:17.521138", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:28:21.764942", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:28:46.795345", "level": "ERROR", "message": "Training failed with error: mean(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: Long"}
+{"timestamp": "2025-10-15T20:28:46.797360", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:31:09.813978", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:31:09.821277", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:31:15.191024", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:31:43.513764", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:31:53.818782", "level": "INFO", "message": "Validation completed", "iou": 0.02532249130308628, "dice": 0.04820370674133301, "pixel_accuracy": 0.05064498260617256, "mean_iou": 0.02532249130308628, "confusion_matrix": 779613.25, "val_loss": 1.412507027387619}
+{"timestamp": "2025-10-15T20:31:54.891178", "level": "ERROR", "message": "Training failed with error: [WinError 1314] A required privilege is not held by the client: 'epoch_000_1.4125' -> 'checkpoints\\\\best.pt'"}
+{"timestamp": "2025-10-15T20:31:54.893205", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:34:34.674556", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:34:34.681084", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:34:39.049296", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:35:04.203425", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:35:14.404061", "level": "INFO", "message": "Validation completed", "iou": 0.025647172704339027, "dice": 0.048791609704494476, "pixel_accuracy": 0.051294345408678055, "mean_iou": 0.025647172704339027, "confusion_matrix": 779613.25, "val_loss": 1.4124629199504852}
+{"timestamp": "2025-10-15T20:35:16.523076", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.025647172704339027, "dice": 0.048791609704494476, "pixel_accuracy": 0.051294345408678055, "mean_iou": 0.025647172704339027, "confusion_matrix": 779613.25, "train_loss": 1.5514677911996841, "val_loss": 1.4124629199504852, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:35:22.380982", "level": "ERROR", "message": "Training failed with error: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()"}
+{"timestamp": "2025-10-15T20:35:22.382665", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:37:31.621190", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:37:31.627102", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:37:35.661682", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:38:00.471640", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:38:10.992471", "level": "INFO", "message": "Validation completed", "iou": 0.025552574545145035, "dice": 0.04862039536237717, "pixel_accuracy": 0.05110514909029007, "mean_iou": 0.025552574545145035, "confusion_matrix": 779613.25, "val_loss": 1.4124234467744827}
+{"timestamp": "2025-10-15T20:38:12.932043", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.025552574545145035, "dice": 0.04862039536237717, "pixel_accuracy": 0.05110514909029007, "mean_iou": 0.025552574545145035, "confusion_matrix": 779613.25, "train_loss": 1.550701454281807, "val_loss": 1.4124234467744827, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:38:18.131708", "level": "ERROR", "message": "Training failed with error: can only convert an array of size 1 to a Python scalar"}
+{"timestamp": "2025-10-15T20:38:18.131708", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:39:17.743104", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:39:17.746634", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:39:21.951286", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:39:47.411484", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:39:57.581726", "level": "INFO", "message": "Validation completed", "iou": 0.02507862076163292, "dice": 0.04776164889335632, "pixel_accuracy": 0.05015724152326584, "mean_iou": 0.02507862076163292, "confusion_matrix": 779613.25, "val_loss": 1.4126445949077606}
+{"timestamp": "2025-10-15T20:40:01.030765", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.02507862076163292, "dice": 0.04776164889335632, "pixel_accuracy": 0.05015724152326584, "mean_iou": 0.02507862076163292, "confusion_matrix": 779613.25, "train_loss": 1.5488507449626923, "val_loss": 1.4126445949077606, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:40:05.761118", "level": "ERROR", "message": "Training failed with error: 'numpy.ndarray' object has no attribute 'numel'"}
+{"timestamp": "2025-10-15T20:40:05.761118", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:41:28.620639", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:41:28.628822", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:41:33.305905", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:41:58.830267", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:42:08.495753", "level": "INFO", "message": "Validation completed", "iou": 0.02572701871395111, "dice": 0.04893608018755913, "pixel_accuracy": 0.05145403742790222, "mean_iou": 0.02572701871395111, "confusion_matrix": 779613.25, "val_loss": 1.4126187860965729}
+{"timestamp": "2025-10-15T20:42:12.072701", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.02572701871395111, "dice": 0.04893608018755913, "pixel_accuracy": 0.05145403742790222, "mean_iou": 0.02572701871395111, "confusion_matrix": 779613.25, "train_loss": 1.550142988562584, "val_loss": 1.4126187860965729, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:42:30.127415", "level": "ERROR", "message": "Training failed with error: object of type 'NoneType' has no len()"}
+{"timestamp": "2025-10-15T20:42:30.127415", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:43:51.851716", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:43:51.858244", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:43:56.369255", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:44:21.324170", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:44:31.304908", "level": "INFO", "message": "Validation completed", "iou": 0.025776883587241173, "dice": 0.04902627691626549, "pixel_accuracy": 0.051553767174482346, "mean_iou": 0.025776883587241173, "confusion_matrix": 779613.25, "val_loss": 1.4125341176986694}
+{"timestamp": "2025-10-15T20:44:33.869658", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.025776883587241173, "dice": 0.04902627691626549, "pixel_accuracy": 0.051553767174482346, "mean_iou": 0.025776883587241173, "confusion_matrix": 779613.25, "train_loss": 1.549462914466858, "val_loss": 1.4125341176986694, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:44:52.236590", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:46:10.464474", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:46:10.473783", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:46:14.927850", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:46:38.117046", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:46:47.323485", "level": "INFO", "message": "Validation completed", "iou": 0.02549036405980587, "dice": 0.04850776493549347, "pixel_accuracy": 0.05098072811961174, "mean_iou": 0.02549036405980587, "confusion_matrix": 779613.25, "val_loss": 1.4125786125659943}
+{"timestamp": "2025-10-15T20:46:49.358096", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.02549036405980587, "dice": 0.04850776493549347, "pixel_accuracy": 0.05098072811961174, "mean_iou": 0.02549036405980587, "confusion_matrix": 779613.25, "train_loss": 1.5477968901395798, "val_loss": 1.4125786125659943, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:47:06.387925", "level": "INFO", "message": "Epoch 1 started"}
+{"timestamp": "2025-10-15T20:47:09.989327", "level": "INFO", "message": "Step 9 completed", "step": 9, "batch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:47:33.235995", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:47:42.142059", "level": "INFO", "message": "Validation completed", "iou": 0.11123736947774887, "dice": 0.18198718130588531, "pixel_accuracy": 0.22247473895549774, "mean_iou": 0.11123736947774887, "confusion_matrix": 779613.25, "val_loss": 1.452032059431076}
+{"timestamp": "2025-10-15T20:47:44.372244", "level": "INFO", "message": "Epoch 1 completed", "iou": 0.11123736947774887, "dice": 0.18198718130588531, "pixel_accuracy": 0.22247473895549774, "mean_iou": 0.11123736947774887, "confusion_matrix": 779613.25, "train_loss": 1.397524818778038, "val_loss": 1.452032059431076, "epoch": 1, "learning_rate": 5e-05}
+{"timestamp": "2025-10-15T20:47:45.901844", "level": "INFO", "message": "Epoch 2 started"}
+{"timestamp": "2025-10-15T20:47:49.404467", "level": "INFO", "message": "Step 17 completed", "step": 17, "batch": 0, "learning_rate": 5e-05}
+{"timestamp": "2025-10-15T20:48:10.941314", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:48:19.782232", "level": "INFO", "message": "Validation completed", "iou": 0.2854973375797272, "dice": 0.36346060037612915, "pixel_accuracy": 0.5709946751594543, "mean_iou": 0.2854973375797272, "confusion_matrix": 779613.25, "val_loss": 1.7631797641515732}
+{"timestamp": "2025-10-15T20:48:21.143516", "level": "INFO", "message": "Epoch 2 completed", "iou": 0.2854973375797272, "dice": 0.36346060037612915, "pixel_accuracy": 0.5709946751594543, "mean_iou": 0.2854973375797272, "confusion_matrix": 779613.25, "train_loss": 1.010207511484623, "val_loss": 1.7631797641515732, "epoch": 2, "learning_rate": 4.994754361934579e-05}
+{"timestamp": "2025-10-15T20:48:22.512254", "level": "INFO", "message": "Epoch 3 started"}
+{"timestamp": "2025-10-15T20:48:25.711486", "level": "INFO", "message": "Step 25 completed", "step": 25, "batch": 0, "learning_rate": 4.994754361934579e-05}
+{"timestamp": "2025-10-15T20:48:48.499352", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:48:57.540703", "level": "INFO", "message": "Validation completed", "iou": 0.43892741203308105, "dice": 0.4674774706363678, "pixel_accuracy": 0.8778548240661621, "mean_iou": 0.43892741203308105, "confusion_matrix": 779613.25, "val_loss": 1.2614784240722656}
+{"timestamp": "2025-10-15T20:49:01.662230", "level": "INFO", "message": "Epoch 3 completed", "iou": 0.43892741203308105, "dice": 0.4674774706363678, "pixel_accuracy": 0.8778548240661621, "mean_iou": 0.43892741203308105, "confusion_matrix": 779613.25, "train_loss": 0.7826333865523338, "val_loss": 1.2614784240722656, "epoch": 3, "learning_rate": 4.979039910365836e-05}
+{"timestamp": "2025-10-15T20:49:02.973738", "level": "INFO", "message": "Epoch 4 started"}
+{"timestamp": "2025-10-15T20:49:06.348991", "level": "INFO", "message": "Step 33 completed", "step": 33, "batch": 0, "learning_rate": 4.979039910365836e-05}
+{"timestamp": "2025-10-15T20:49:28.296343", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:49:36.840018", "level": "INFO", "message": "Validation completed", "iou": 0.47007763385772705, "dice": 0.48457732796669006, "pixel_accuracy": 0.9401552677154541, "mean_iou": 0.47007763385772705, "confusion_matrix": 779613.25, "val_loss": 0.889297753572464}
+{"timestamp": "2025-10-15T20:49:46.810263", "level": "INFO", "message": "Epoch 4 completed", "iou": 0.47007763385772705, "dice": 0.48457732796669006, "pixel_accuracy": 0.9401552677154541, "mean_iou": 0.47007763385772705, "confusion_matrix": 779613.25, "train_loss": 0.6997052133083344, "val_loss": 0.889297753572464, "epoch": 4, "learning_rate": 4.952923936987915e-05}
+{"timestamp": "2025-10-15T20:49:53.024512", "level": "INFO", "message": "Epoch 5 started"}
+{"timestamp": "2025-10-15T20:49:56.400284", "level": "INFO", "message": "Step 41 completed", "step": 41, "batch": 0, "learning_rate": 4.952923936987915e-05}
+{"timestamp": "2025-10-15T20:50:18.901012", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:50:27.488907", "level": "INFO", "message": "Validation completed", "iou": 0.48852747678756714, "dice": 0.49419716000556946, "pixel_accuracy": 0.9770549535751343, "mean_iou": 0.48852747678756714, "confusion_matrix": 779613.25, "val_loss": 0.7091370075941086}
+{"timestamp": "2025-10-15T20:50:29.290476", "level": "INFO", "message": "Epoch 5 completed", "iou": 0.48852747678756714, "dice": 0.49419716000556946, "pixel_accuracy": 0.9770549535751343, "mean_iou": 0.48852747678756714, "confusion_matrix": 779613.25, "train_loss": 0.6614814847707748, "val_loss": 0.7091370075941086, "epoch": 5, "learning_rate": 4.9165182744082176e-05}
+{"timestamp": "2025-10-15T20:50:46.002961", "level": "INFO", "message": "Epoch 6 started"}
+{"timestamp": "2025-10-15T20:50:49.420424", "level": "INFO", "message": "Step 49 completed", "step": 49, "batch": 0, "learning_rate": 4.9165182744082176e-05}
+{"timestamp": "2025-10-15T20:51:13.007032", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:51:21.914256", "level": "INFO", "message": "Validation completed", "iou": 0.4965425133705139, "dice": 0.49826526641845703, "pixel_accuracy": 0.9930850267410278, "mean_iou": 0.4965425133705139, "confusion_matrix": 779613.25, "val_loss": 0.6441337466239929}
+{"timestamp": "2025-10-15T20:51:24.795962", "level": "INFO", "message": "Epoch 6 completed", "iou": 0.4965425133705139, "dice": 0.49826526641845703, "pixel_accuracy": 0.9930850267410278, "mean_iou": 0.4965425133705139, "confusion_matrix": 779613.25, "train_loss": 0.642217643558979, "val_loss": 0.6441337466239929, "epoch": 6, "learning_rate": 4.86997881726301e-05}
+{"timestamp": "2025-10-15T20:51:26.345217", "level": "INFO", "message": "Epoch 7 started"}
+{"timestamp": "2025-10-15T20:51:29.804285", "level": "INFO", "message": "Step 57 completed", "step": 57, "batch": 0, "learning_rate": 4.86997881726301e-05}
+{"timestamp": "2025-10-15T20:51:52.248565", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:52:01.853992", "level": "INFO", "message": "Validation completed", "iou": 0.4986225664615631, "dice": 0.49931031465530396, "pixel_accuracy": 0.9972451329231262, "mean_iou": 0.4986225664615631, "confusion_matrix": 779613.25, "val_loss": 0.6201566085219383}
+{"timestamp": "2025-10-15T20:52:04.623262", "level": "INFO", "message": "Epoch 7 completed", "iou": 0.4986225664615631, "dice": 0.49931031465530396, "pixel_accuracy": 0.9972451329231262, "mean_iou": 0.4986225664615631, "confusion_matrix": 779613.25, "train_loss": 0.6352556571364403, "val_loss": 0.6201566085219383, "epoch": 7, "learning_rate": 4.8135048546526525e-05}
+{"timestamp": "2025-10-15T20:52:06.058640", "level": "INFO", "message": "Epoch 8 started"}
+{"timestamp": "2025-10-15T20:52:09.973190", "level": "INFO", "message": "Step 65 completed", "step": 65, "batch": 0, "learning_rate": 4.8135048546526525e-05}
+{"timestamp": "2025-10-15T20:52:33.223303", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:52:42.208966", "level": "INFO", "message": "Validation completed", "iou": 0.4995715916156769, "dice": 0.4997856914997101, "pixel_accuracy": 0.9991431832313538, "mean_iou": 0.4995715916156769, "confusion_matrix": 779613.25, "val_loss": 0.6054060459136963}
+{"timestamp": "2025-10-15T20:52:50.907957", "level": "INFO", "message": "Epoch 8 completed", "iou": 0.4995715916156769, "dice": 0.4997856914997101, "pixel_accuracy": 0.9991431832313538, "mean_iou": 0.4995715916156769, "confusion_matrix": 779613.25, "train_loss": 0.6153103783726692, "val_loss": 0.6054060459136963, "epoch": 8, "learning_rate": 4.7473382167550865e-05}
+{"timestamp": "2025-10-15T20:52:58.819922", "level": "INFO", "message": "Epoch 9 started"}
+{"timestamp": "2025-10-15T20:53:02.257323", "level": "INFO", "message": "Step 73 completed", "step": 73, "batch": 0, "learning_rate": 4.7473382167550865e-05}
+{"timestamp": "2025-10-15T20:53:23.822989", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:53:32.680668", "level": "INFO", "message": "Validation completed", "iou": 0.4995603561401367, "dice": 0.4997800886631012, "pixel_accuracy": 0.9991207122802734, "mean_iou": 0.4995603561401367, "confusion_matrix": 779613.25, "val_loss": 0.6020947247743607}
+{"timestamp": "2025-10-15T20:53:34.949726", "level": "INFO", "message": "Epoch 9 completed", "iou": 0.4995603561401367, "dice": 0.4997800886631012, "pixel_accuracy": 0.9991207122802734, "mean_iou": 0.4995603561401367, "confusion_matrix": 779613.25, "train_loss": 0.6152503415942192, "val_loss": 0.6020947247743607, "epoch": 9, "learning_rate": 4.671762239271875e-05}
+{"timestamp": "2025-10-15T20:53:39.067094", "level": "INFO", "message": "Training completed"}
+{"timestamp": "2025-10-15T20:55:28.235181", "level": "INFO", "message": "Training started"}
+{"timestamp": "2025-10-15T20:55:28.247569", "level": "INFO", "message": "Epoch 0 started"}
+{"timestamp": "2025-10-15T20:55:32.285235", "level": "INFO", "message": "Step 1 completed", "step": 1, "batch": 0, "learning_rate": 0.0}
+{"timestamp": "2025-10-15T20:55:54.842409", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:56:04.306833", "level": "INFO", "message": "Validation completed", "iou": 0.02526845782995224, "dice": 0.04810579866170883, "pixel_accuracy": 0.05053691565990448, "mean_iou": 0.02526845782995224, "confusion_matrix": 779613.25, "val_loss": 1.4125690162181854}
+{"timestamp": "2025-10-15T20:56:07.024457", "level": "INFO", "message": "Epoch 0 completed", "iou": 0.02526845782995224, "dice": 0.04810579866170883, "pixel_accuracy": 0.05053691565990448, "mean_iou": 0.02526845782995224, "confusion_matrix": 779613.25, "train_loss": 1.549407720565796, "val_loss": 1.4125690162181854, "epoch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:56:24.303799", "level": "INFO", "message": "Epoch 1 started"}
+{"timestamp": "2025-10-15T20:56:27.537090", "level": "INFO", "message": "Step 9 completed", "step": 9, "batch": 0, "learning_rate": 2.5e-05}
+{"timestamp": "2025-10-15T20:56:49.879709", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:56:59.057574", "level": "INFO", "message": "Validation completed", "iou": 0.11080285906791687, "dice": 0.18140527606010437, "pixel_accuracy": 0.22160571813583374, "mean_iou": 0.11080285906791687, "confusion_matrix": 779613.25, "val_loss": 1.450058177113533}
+{"timestamp": "2025-10-15T20:57:00.392001", "level": "INFO", "message": "Epoch 1 completed", "iou": 0.11080285906791687, "dice": 0.18140527606010437, "pixel_accuracy": 0.22160571813583374, "mean_iou": 0.11080285906791687, "confusion_matrix": 779613.25, "train_loss": 1.39571413397789, "val_loss": 1.450058177113533, "epoch": 1, "learning_rate": 5e-05}
+{"timestamp": "2025-10-15T20:57:01.738398", "level": "INFO", "message": "Epoch 2 started"}
+{"timestamp": "2025-10-15T20:57:05.021149", "level": "INFO", "message": "Step 17 completed", "step": 17, "batch": 0, "learning_rate": 5e-05}
+{"timestamp": "2025-10-15T20:57:27.105761", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:57:35.974417", "level": "INFO", "message": "Validation completed", "iou": 0.2862427234649658, "dice": 0.3640640676021576, "pixel_accuracy": 0.5724854469299316, "mean_iou": 0.2862427234649658, "confusion_matrix": 779613.25, "val_loss": 1.7695638239383698}
+{"timestamp": "2025-10-15T20:57:37.303130", "level": "INFO", "message": "Epoch 2 completed", "iou": 0.2862427234649658, "dice": 0.3640640676021576, "pixel_accuracy": 0.5724854469299316, "mean_iou": 0.2862427234649658, "confusion_matrix": 779613.25, "train_loss": 1.0111238732933998, "val_loss": 1.7695638239383698, "epoch": 2, "learning_rate": 4.994754361934579e-05}
+{"timestamp": "2025-10-15T20:57:40.313153", "level": "INFO", "message": "Epoch 3 started"}
+{"timestamp": "2025-10-15T20:57:43.720254", "level": "INFO", "message": "Step 25 completed", "step": 25, "batch": 0, "learning_rate": 4.994754361934579e-05}
+{"timestamp": "2025-10-15T20:58:05.744499", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:58:14.905672", "level": "INFO", "message": "Validation completed", "iou": 0.43784064054489136, "dice": 0.4668603837490082, "pixel_accuracy": 0.8756812810897827, "mean_iou": 0.43784064054489136, "confusion_matrix": 779613.25, "val_loss": 1.2646233886480331}
+{"timestamp": "2025-10-15T20:58:24.474493", "level": "INFO", "message": "Epoch 3 completed", "iou": 0.43784064054489136, "dice": 0.4668603837490082, "pixel_accuracy": 0.8756812810897827, "mean_iou": 0.43784064054489136, "confusion_matrix": 779613.25, "train_loss": 0.7805516794323921, "val_loss": 1.2646233886480331, "epoch": 3, "learning_rate": 4.979039910365836e-05}
+{"timestamp": "2025-10-15T20:58:38.502700", "level": "INFO", "message": "Epoch 4 started"}
+{"timestamp": "2025-10-15T20:58:42.356497", "level": "INFO", "message": "Step 33 completed", "step": 33, "batch": 0, "learning_rate": 4.979039910365836e-05}
+{"timestamp": "2025-10-15T20:59:04.428854", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T20:59:14.495192", "level": "INFO", "message": "Validation completed", "iou": 0.4698634147644043, "dice": 0.48446348309516907, "pixel_accuracy": 0.9397268295288086, "mean_iou": 0.4698634147644043, "confusion_matrix": 779613.25, "val_loss": 0.8841187953948975}
+{"timestamp": "2025-10-15T20:59:25.037392", "level": "INFO", "message": "Epoch 4 completed", "iou": 0.4698634147644043, "dice": 0.48446348309516907, "pixel_accuracy": 0.9397268295288086, "mean_iou": 0.4698634147644043, "confusion_matrix": 779613.25, "train_loss": 0.7010795250535011, "val_loss": 0.8841187953948975, "epoch": 4, "learning_rate": 4.952923936987915e-05}
+{"timestamp": "2025-10-15T20:59:32.434973", "level": "INFO", "message": "Epoch 5 started"}
+{"timestamp": "2025-10-15T20:59:35.714641", "level": "INFO", "message": "Step 41 completed", "step": 41, "batch": 0, "learning_rate": 4.952923936987915e-05}
+{"timestamp": "2025-10-15T20:59:55.865860", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:00:04.094851", "level": "INFO", "message": "Validation completed", "iou": 0.49087753891944885, "dice": 0.49539676308631897, "pixel_accuracy": 0.9817550778388977, "mean_iou": 0.49087753891944885, "confusion_matrix": 779613.25, "val_loss": 0.695377767086029}
+{"timestamp": "2025-10-15T21:00:05.805852", "level": "INFO", "message": "Epoch 5 completed", "iou": 0.49087753891944885, "dice": 0.49539676308631897, "pixel_accuracy": 0.9817550778388977, "mean_iou": 0.49087753891944885, "confusion_matrix": 779613.25, "train_loss": 0.6577252820134163, "val_loss": 0.695377767086029, "epoch": 5, "learning_rate": 4.9165182744082176e-05}
+{"timestamp": "2025-10-15T21:00:31.114002", "level": "INFO", "message": "Epoch 6 started"}
+{"timestamp": "2025-10-15T21:00:34.507817", "level": "INFO", "message": "Step 49 completed", "step": 49, "batch": 0, "learning_rate": 4.9165182744082176e-05}
+{"timestamp": "2025-10-15T21:00:56.433561", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:01:04.815634", "level": "INFO", "message": "Validation completed", "iou": 0.4985806941986084, "dice": 0.499289333820343, "pixel_accuracy": 0.9971613883972168, "mean_iou": 0.4985806941986084, "confusion_matrix": 779613.25, "val_loss": 0.6339239403605461}
+{"timestamp": "2025-10-15T21:01:10.729885", "level": "INFO", "message": "Epoch 6 completed", "iou": 0.4985806941986084, "dice": 0.499289333820343, "pixel_accuracy": 0.9971613883972168, "mean_iou": 0.4985806941986084, "confusion_matrix": 779613.25, "train_loss": 0.6403772905468941, "val_loss": 0.6339239403605461, "epoch": 6, "learning_rate": 4.86997881726301e-05}
+{"timestamp": "2025-10-15T21:01:20.499724", "level": "INFO", "message": "Epoch 7 started"}
+{"timestamp": "2025-10-15T21:01:23.837106", "level": "INFO", "message": "Step 57 completed", "step": 57, "batch": 0, "learning_rate": 4.86997881726301e-05}
+{"timestamp": "2025-10-15T21:01:44.038750", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:01:52.613293", "level": "INFO", "message": "Validation completed", "iou": 0.4989302456378937, "dice": 0.4994645416736603, "pixel_accuracy": 0.9978604912757874, "mean_iou": 0.4989302456378937, "confusion_matrix": 779613.25, "val_loss": 0.6178749278187752}
+{"timestamp": "2025-10-15T21:01:55.996821", "level": "INFO", "message": "Epoch 7 completed", "iou": 0.4989302456378937, "dice": 0.4994645416736603, "pixel_accuracy": 0.9978604912757874, "mean_iou": 0.4989302456378937, "confusion_matrix": 779613.25, "train_loss": 0.6272590681910515, "val_loss": 0.6178749278187752, "epoch": 7, "learning_rate": 4.8135048546526525e-05}
+{"timestamp": "2025-10-15T21:02:05.610318", "level": "INFO", "message": "Epoch 8 started"}
+{"timestamp": "2025-10-15T21:02:08.758435", "level": "INFO", "message": "Step 65 completed", "step": 65, "batch": 0, "learning_rate": 4.8135048546526525e-05}
+{"timestamp": "2025-10-15T21:02:29.140804", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:02:37.395882", "level": "INFO", "message": "Validation completed", "iou": 0.49937084317207336, "dice": 0.49968522787094116, "pixel_accuracy": 0.9987416863441467, "mean_iou": 0.49937084317207336, "confusion_matrix": 779613.25, "val_loss": 0.6063609346747398}
+{"timestamp": "2025-10-15T21:02:39.123212", "level": "INFO", "message": "Epoch 8 completed", "iou": 0.49937084317207336, "dice": 0.49968522787094116, "pixel_accuracy": 0.9987416863441467, "mean_iou": 0.49937084317207336, "confusion_matrix": 779613.25, "train_loss": 0.6182864010334015, "val_loss": 0.6063609346747398, "epoch": 8, "learning_rate": 4.7473382167550865e-05}
+{"timestamp": "2025-10-15T21:02:40.948636", "level": "INFO", "message": "Epoch 9 started"}
+{"timestamp": "2025-10-15T21:02:44.268846", "level": "INFO", "message": "Step 73 completed", "step": 73, "batch": 0, "learning_rate": 4.7473382167550865e-05}
+{"timestamp": "2025-10-15T21:03:04.571413", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:03:12.848828", "level": "INFO", "message": "Validation completed", "iou": 0.4995518624782562, "dice": 0.49977582693099976, "pixel_accuracy": 0.9991037249565125, "mean_iou": 0.4995518624782562, "confusion_matrix": 779613.25, "val_loss": 0.6000162288546562}
+{"timestamp": "2025-10-15T21:03:14.446741", "level": "INFO", "message": "Epoch 9 completed", "iou": 0.4995518624782562, "dice": 0.49977582693099976, "pixel_accuracy": 0.9991037249565125, "mean_iou": 0.4995518624782562, "confusion_matrix": 779613.25, "train_loss": 0.6104618012905121, "val_loss": 0.6000162288546562, "epoch": 9, "learning_rate": 4.671762239271875e-05}
+{"timestamp": "2025-10-15T21:03:16.194699", "level": "INFO", "message": "Epoch 10 started"}
+{"timestamp": "2025-10-15T21:03:19.451045", "level": "INFO", "message": "Step 81 completed", "step": 81, "batch": 0, "learning_rate": 4.671762239271875e-05}
+{"timestamp": "2025-10-15T21:03:39.509282", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:03:48.016015", "level": "INFO", "message": "Validation completed", "iou": 0.4995839297771454, "dice": 0.4997918903827667, "pixel_accuracy": 0.9991678595542908, "mean_iou": 0.4995839297771454, "confusion_matrix": 779613.25, "val_loss": 0.5958140045404434}
+{"timestamp": "2025-10-15T21:03:49.822547", "level": "INFO", "message": "Epoch 10 completed", "iou": 0.4995839297771454, "dice": 0.4997918903827667, "pixel_accuracy": 0.9991678595542908, "mean_iou": 0.4995839297771454, "confusion_matrix": 779613.25, "train_loss": 0.6038002744317055, "val_loss": 0.5958140045404434, "epoch": 10, "learning_rate": 4.587100550141236e-05}
+{"timestamp": "2025-10-15T21:04:05.821233", "level": "INFO", "message": "Epoch 11 started"}
+{"timestamp": "2025-10-15T21:04:09.040319", "level": "INFO", "message": "Step 89 completed", "step": 89, "batch": 0, "learning_rate": 4.587100550141236e-05}
+{"timestamp": "2025-10-15T21:04:29.457314", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:04:37.929973", "level": "INFO", "message": "Validation completed", "iou": 0.4995940327644348, "dice": 0.49979692697525024, "pixel_accuracy": 0.9991880655288696, "mean_iou": 0.4995940327644348, "confusion_matrix": 779613.25, "val_loss": 0.5909690260887146}
+{"timestamp": "2025-10-15T21:04:40.877317", "level": "INFO", "message": "Epoch 11 completed", "iou": 0.4995940327644348, "dice": 0.49979692697525024, "pixel_accuracy": 0.9991880655288696, "mean_iou": 0.4995940327644348, "confusion_matrix": 779613.25, "train_loss": 0.5931675061583519, "val_loss": 0.5909690260887146, "epoch": 11, "learning_rate": 4.4937156837135266e-05}
+{"timestamp": "2025-10-15T21:04:42.705213", "level": "INFO", "message": "Epoch 12 started"}
+{"timestamp": "2025-10-15T21:04:45.785405", "level": "INFO", "message": "Step 97 completed", "step": 97, "batch": 0, "learning_rate": 4.4937156837135266e-05}
+{"timestamp": "2025-10-15T21:05:06.150736", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:05:14.606185", "level": "INFO", "message": "Validation completed", "iou": 0.49971139430999756, "dice": 0.4998556673526764, "pixel_accuracy": 0.9994227886199951, "mean_iou": 0.49971139430999756, "confusion_matrix": 779613.25, "val_loss": 0.5878055244684219}
+{"timestamp": "2025-10-15T21:05:16.372495", "level": "INFO", "message": "Epoch 12 completed", "iou": 0.49971139430999756, "dice": 0.4998556673526764, "pixel_accuracy": 0.9994227886199951, "mean_iou": 0.49971139430999756, "confusion_matrix": 779613.25, "train_loss": 0.5926781371235847, "val_loss": 0.5878055244684219, "epoch": 12, "learning_rate": 4.392007528323495e-05}
+{"timestamp": "2025-10-15T21:05:18.111934", "level": "INFO", "message": "Epoch 13 started"}
+{"timestamp": "2025-10-15T21:05:21.193987", "level": "INFO", "message": "Step 105 completed", "step": 105, "batch": 0, "learning_rate": 4.392007528323495e-05}
+{"timestamp": "2025-10-15T21:05:41.170120", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:05:49.750712", "level": "INFO", "message": "Validation completed", "iou": 0.4997836947441101, "dice": 0.49989181756973267, "pixel_accuracy": 0.9995673894882202, "mean_iou": 0.4997836947441101, "confusion_matrix": 779613.25, "val_loss": 0.5835448205471039}
+{"timestamp": "2025-10-15T21:05:51.745217", "level": "INFO", "message": "Epoch 13 completed", "iou": 0.4997836947441101, "dice": 0.49989181756973267, "pixel_accuracy": 0.9995673894882202, "mean_iou": 0.4997836947441101, "confusion_matrix": 779613.25, "train_loss": 0.5874592363834381, "val_loss": 0.5835448205471039, "epoch": 13, "learning_rate": 4.2824116139070415e-05}
+{"timestamp": "2025-10-15T21:05:53.375540", "level": "INFO", "message": "Epoch 14 started"}
+{"timestamp": "2025-10-15T21:05:56.372245", "level": "INFO", "message": "Step 113 completed", "step": 113, "batch": 0, "learning_rate": 4.2824116139070415e-05}
+{"timestamp": "2025-10-15T21:06:16.720767", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:06:25.017144", "level": "INFO", "message": "Validation completed", "iou": 0.4998108148574829, "dice": 0.49990537762641907, "pixel_accuracy": 0.9996216297149658, "mean_iou": 0.4998108148574829, "confusion_matrix": 779613.25, "val_loss": 0.5810502618551254}
+{"timestamp": "2025-10-15T21:06:26.668400", "level": "INFO", "message": "Epoch 14 completed", "iou": 0.4998108148574829, "dice": 0.49990537762641907, "pixel_accuracy": 0.9996216297149658, "mean_iou": 0.4998108148574829, "confusion_matrix": 779613.25, "train_loss": 0.5837370902299881, "val_loss": 0.5810502618551254, "epoch": 14, "learning_rate": 4.165397246995169e-05}
+{"timestamp": "2025-10-15T21:06:28.397343", "level": "INFO", "message": "Epoch 15 started"}
+{"timestamp": "2025-10-15T21:06:31.490544", "level": "INFO", "message": "Step 121 completed", "step": 121, "batch": 0, "learning_rate": 4.165397246995169e-05}
+{"timestamp": "2025-10-15T21:06:51.970149", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:07:00.314872", "level": "INFO", "message": "Validation completed", "iou": 0.4997612535953522, "dice": 0.4998806118965149, "pixel_accuracy": 0.9995225071907043, "mean_iou": 0.4997612535953522, "confusion_matrix": 779613.25, "val_loss": 0.581365168094635}
+{"timestamp": "2025-10-15T21:07:01.635613", "level": "INFO", "message": "Epoch 15 completed", "iou": 0.4997612535953522, "dice": 0.4998806118965149, "pixel_accuracy": 0.9995225071907043, "mean_iou": 0.4997612535953522, "confusion_matrix": 779613.25, "train_loss": 0.5865952149033546, "val_loss": 0.581365168094635, "epoch": 15, "learning_rate": 4.041465501071366e-05}
+{"timestamp": "2025-10-15T21:07:19.380997", "level": "INFO", "message": "Epoch 16 started"}
+{"timestamp": "2025-10-15T21:07:22.786996", "level": "INFO", "message": "Step 129 completed", "step": 129, "batch": 0, "learning_rate": 4.041465501071366e-05}
+{"timestamp": "2025-10-15T21:07:43.147700", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:07:51.483849", "level": "INFO", "message": "Validation completed", "iou": 0.49984094500541687, "dice": 0.49992045760154724, "pixel_accuracy": 0.9996818900108337, "mean_iou": 0.49984094500541687, "confusion_matrix": 779613.25, "val_loss": 0.5745138600468636}
+{"timestamp": "2025-10-15T21:07:53.376272", "level": "INFO", "message": "Epoch 16 completed", "iou": 0.49984094500541687, "dice": 0.49992045760154724, "pixel_accuracy": 0.9996818900108337, "mean_iou": 0.49984094500541687, "confusion_matrix": 779613.25, "train_loss": 0.5776349380612373, "val_loss": 0.5745138600468636, "epoch": 16, "learning_rate": 3.9111470708980256e-05}
+{"timestamp": "2025-10-15T21:07:55.020085", "level": "INFO", "message": "Epoch 17 started"}
+{"timestamp": "2025-10-15T21:07:58.180616", "level": "INFO", "message": "Step 137 completed", "step": 137, "batch": 0, "learning_rate": 3.9111470708980256e-05}
+{"timestamp": "2025-10-15T21:08:18.184267", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:08:26.146758", "level": "INFO", "message": "Validation completed", "iou": 0.4998439848423004, "dice": 0.499921977519989, "pixel_accuracy": 0.9996879696846008, "mean_iou": 0.4998439848423004, "confusion_matrix": 779613.25, "val_loss": 0.5718272477388382}
+{"timestamp": "2025-10-15T21:08:29.136073", "level": "INFO", "message": "Epoch 17 completed", "iou": 0.4998439848423004, "dice": 0.499921977519989, "pixel_accuracy": 0.9996879696846008, "mean_iou": 0.4998439848423004, "confusion_matrix": 779613.25, "train_loss": 0.5755410566926003, "val_loss": 0.5718272477388382, "epoch": 17, "learning_rate": 3.775e-05}
+{"timestamp": "2025-10-15T21:08:30.835277", "level": "INFO", "message": "Epoch 18 started"}
+{"timestamp": "2025-10-15T21:08:33.850880", "level": "INFO", "message": "Step 145 completed", "step": 145, "batch": 0, "learning_rate": 3.775e-05}
+{"timestamp": "2025-10-15T21:08:54.371041", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:09:02.421229", "level": "INFO", "message": "Validation completed", "iou": 0.499809205532074, "dice": 0.4999045729637146, "pixel_accuracy": 0.999618411064148, "mean_iou": 0.499809205532074, "confusion_matrix": 779613.25, "val_loss": 0.5723653510212898}
+{"timestamp": "2025-10-15T21:09:04.396379", "level": "INFO", "message": "Epoch 18 completed", "iou": 0.499809205532074, "dice": 0.4999045729637146, "pixel_accuracy": 0.999618411064148, "mean_iou": 0.499809205532074, "confusion_matrix": 779613.25, "train_loss": 0.5771325677633286, "val_loss": 0.5723653510212898, "epoch": 18, "learning_rate": 3.6336072910365536e-05}
+{"timestamp": "2025-10-15T21:09:05.686017", "level": "INFO", "message": "Epoch 19 started"}
+{"timestamp": "2025-10-15T21:09:08.850205", "level": "INFO", "message": "Step 153 completed", "step": 153, "batch": 0, "learning_rate": 3.6336072910365536e-05}
+{"timestamp": "2025-10-15T21:09:29.069256", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:09:37.128511", "level": "INFO", "message": "Validation completed", "iou": 0.49981367588043213, "dice": 0.49990683794021606, "pixel_accuracy": 0.9996273517608643, "mean_iou": 0.49981367588043213, "confusion_matrix": 779613.25, "val_loss": 0.5719844326376915}
+{"timestamp": "2025-10-15T21:09:38.413438", "level": "INFO", "message": "Epoch 19 completed", "iou": 0.49981367588043213, "dice": 0.49990683794021606, "pixel_accuracy": 0.9996273517608643, "mean_iou": 0.49981367588043213, "confusion_matrix": 779613.25, "train_loss": 0.5749998316168785, "val_loss": 0.5719844326376915, "epoch": 19, "learning_rate": 3.4875744092944704e-05}
+{"timestamp": "2025-10-15T21:09:39.751179", "level": "INFO", "message": "Epoch 20 started"}
+{"timestamp": "2025-10-15T21:09:42.929291", "level": "INFO", "message": "Step 161 completed", "step": 161, "batch": 0, "learning_rate": 3.4875744092944704e-05}
+{"timestamp": "2025-10-15T21:10:03.574354", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:10:11.828947", "level": "INFO", "message": "Validation completed", "iou": 0.4998435080051422, "dice": 0.4999217391014099, "pixel_accuracy": 0.9996870160102844, "mean_iou": 0.4998435080051422, "confusion_matrix": 779613.25, "val_loss": 0.5691665932536125}
+{"timestamp": "2025-10-15T21:10:14.723625", "level": "INFO", "message": "Epoch 20 completed", "iou": 0.4998435080051422, "dice": 0.4999217391014099, "pixel_accuracy": 0.9996870160102844, "mean_iou": 0.4998435080051422, "confusion_matrix": 779613.25, "train_loss": 0.5710665732622147, "val_loss": 0.5691665932536125, "epoch": 20, "learning_rate": 3.337526689992746e-05}
+{"timestamp": "2025-10-15T21:10:30.346103", "level": "INFO", "message": "Epoch 21 started"}
+{"timestamp": "2025-10-15T21:10:33.446420", "level": "INFO", "message": "Step 169 completed", "step": 169, "batch": 0, "learning_rate": 3.337526689992746e-05}
+{"timestamp": "2025-10-15T21:10:54.228970", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:11:02.505988", "level": "INFO", "message": "Validation completed", "iou": 0.4998423755168915, "dice": 0.49992117285728455, "pixel_accuracy": 0.999684751033783, "mean_iou": 0.4998423755168915, "confusion_matrix": 779613.25, "val_loss": 0.5669119879603386}
+{"timestamp": "2025-10-15T21:11:04.309883", "level": "INFO", "message": "Epoch 21 completed", "iou": 0.4998423755168915, "dice": 0.49992117285728455, "pixel_accuracy": 0.999684751033783, "mean_iou": 0.4998423755168915, "confusion_matrix": 779613.25, "train_loss": 0.5677610486745834, "val_loss": 0.5669119879603386, "epoch": 21, "learning_rate": 3.184106660501176e-05}
+{"timestamp": "2025-10-15T21:11:05.955535", "level": "INFO", "message": "Epoch 22 started"}
+{"timestamp": "2025-10-15T21:11:09.059352", "level": "INFO", "message": "Step 177 completed", "step": 177, "batch": 0, "learning_rate": 3.184106660501176e-05}
+{"timestamp": "2025-10-15T21:11:29.286639", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:11:37.558768", "level": "INFO", "message": "Validation completed", "iou": 0.49983277916908264, "dice": 0.4999163746833801, "pixel_accuracy": 0.9996655583381653, "mean_iou": 0.49983277916908264, "confusion_matrix": 779613.25, "val_loss": 0.5677620321512222}
+{"timestamp": "2025-10-15T21:11:38.809271", "level": "INFO", "message": "Epoch 22 completed", "iou": 0.49983277916908264, "dice": 0.4999163746833801, "pixel_accuracy": 0.9996655583381653, "mean_iou": 0.49983277916908264, "confusion_matrix": 779613.25, "train_loss": 0.5719659477472305, "val_loss": 0.5677620321512222, "epoch": 22, "learning_rate": 3.027971288939515e-05}
+{"timestamp": "2025-10-15T21:11:40.269956", "level": "INFO", "message": "Epoch 23 started"}
+{"timestamp": "2025-10-15T21:11:43.489602", "level": "INFO", "message": "Step 185 completed", "step": 185, "batch": 0, "learning_rate": 3.027971288939515e-05}
+{"timestamp": "2025-10-15T21:12:03.841596", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:12:12.061538", "level": "INFO", "message": "Validation completed", "iou": 0.4998334050178528, "dice": 0.4999167025089264, "pixel_accuracy": 0.9996668100357056, "mean_iou": 0.4998334050178528, "confusion_matrix": 779613.25, "val_loss": 0.5683087930083275}
+{"timestamp": "2025-10-15T21:12:14.916525", "level": "INFO", "message": "Epoch 23 completed", "iou": 0.4998334050178528, "dice": 0.4999167025089264, "pixel_accuracy": 0.9996668100357056, "mean_iou": 0.4998334050178528, "confusion_matrix": 779613.25, "train_loss": 0.5719216987490654, "val_loss": 0.5683087930083275, "epoch": 23, "learning_rate": 2.8697891709391273e-05}
+{"timestamp": "2025-10-15T21:12:18.513637", "level": "INFO", "message": "Epoch 24 started"}
+{"timestamp": "2025-10-15T21:12:21.825965", "level": "INFO", "message": "Step 193 completed", "step": 193, "batch": 0, "learning_rate": 2.8697891709391273e-05}
+{"timestamp": "2025-10-15T21:12:42.093267", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:12:50.605756", "level": "INFO", "message": "Validation completed", "iou": 0.499843031167984, "dice": 0.4999215006828308, "pixel_accuracy": 0.999686062335968, "mean_iou": 0.499843031167984, "confusion_matrix": 779613.25, "val_loss": 0.5653286799788475}
+{"timestamp": "2025-10-15T21:12:52.693540", "level": "INFO", "message": "Epoch 24 completed", "iou": 0.499843031167984, "dice": 0.4999215006828308, "pixel_accuracy": 0.999686062335968, "mean_iou": 0.499843031167984, "confusion_matrix": 779613.25, "train_loss": 0.5652459636330605, "val_loss": 0.5653286799788475, "epoch": 24, "learning_rate": 2.710237666613851e-05}
+{"timestamp": "2025-10-15T21:12:57.835287", "level": "INFO", "message": "Epoch 25 started"}
+{"timestamp": "2025-10-15T21:13:01.042339", "level": "INFO", "message": "Step 201 completed", "step": 201, "batch": 0, "learning_rate": 2.710237666613851e-05}
+{"timestamp": "2025-10-15T21:13:21.104010", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:13:29.365316", "level": "INFO", "message": "Validation completed", "iou": 0.4998425543308258, "dice": 0.4999212622642517, "pixel_accuracy": 0.9996851086616516, "mean_iou": 0.4998425543308258, "confusion_matrix": 779613.25, "val_loss": 0.5632978603243828}
+{"timestamp": "2025-10-15T21:13:31.015534", "level": "INFO", "message": "Epoch 25 completed", "iou": 0.4998425543308258, "dice": 0.4999212622642517, "pixel_accuracy": 0.9996851086616516, "mean_iou": 0.4998425543308258, "confusion_matrix": 779613.25, "train_loss": 0.5652412995696068, "val_loss": 0.5632978603243828, "epoch": 25, "learning_rate": 2.5500000000000003e-05}
+{"timestamp": "2025-10-15T21:13:52.926225", "level": "INFO", "message": "Epoch 26 started"}
+{"timestamp": "2025-10-15T21:13:56.020219", "level": "INFO", "message": "Step 209 completed", "step": 209, "batch": 0, "learning_rate": 2.5500000000000003e-05}
+{"timestamp": "2025-10-15T21:14:15.545009", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:14:23.632044", "level": "INFO", "message": "Validation completed", "iou": 0.49983933568000793, "dice": 0.4999196529388428, "pixel_accuracy": 0.9996786713600159, "mean_iou": 0.49983933568000793, "confusion_matrix": 779613.25, "val_loss": 0.5605784729123116}
+{"timestamp": "2025-10-15T21:14:25.228434", "level": "INFO", "message": "Epoch 26 completed", "iou": 0.49983933568000793, "dice": 0.4999196529388428, "pixel_accuracy": 0.9996786713600159, "mean_iou": 0.49983933568000793, "confusion_matrix": 779613.25, "train_loss": 0.5601070374250412, "val_loss": 0.5605784729123116, "epoch": 26, "learning_rate": 2.3897623333861495e-05}
+{"timestamp": "2025-10-15T21:14:30.006417", "level": "INFO", "message": "Epoch 27 started"}
+{"timestamp": "2025-10-15T21:14:33.172144", "level": "INFO", "message": "Step 217 completed", "step": 217, "batch": 0, "learning_rate": 2.3897623333861495e-05}
+{"timestamp": "2025-10-15T21:14:53.287693", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:15:01.332022", "level": "INFO", "message": "Validation completed", "iou": 0.4998379051685333, "dice": 0.49991893768310547, "pixel_accuracy": 0.9996758103370667, "mean_iou": 0.4998379051685333, "confusion_matrix": 779613.25, "val_loss": 0.5591145306825638}
+{"timestamp": "2025-10-15T21:15:03.681998", "level": "INFO", "message": "Epoch 27 completed", "iou": 0.4998379051685333, "dice": 0.49991893768310547, "pixel_accuracy": 0.9996758103370667, "mean_iou": 0.4998379051685333, "confusion_matrix": 779613.25, "train_loss": 0.55999606102705, "val_loss": 0.5591145306825638, "epoch": 27, "learning_rate": 2.2302108290608744e-05}
+{"timestamp": "2025-10-15T21:15:05.369320", "level": "INFO", "message": "Epoch 28 started"}
+{"timestamp": "2025-10-15T21:15:08.553715", "level": "INFO", "message": "Step 225 completed", "step": 225, "batch": 0, "learning_rate": 2.2302108290608744e-05}
+{"timestamp": "2025-10-15T21:15:28.621292", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:15:41.884630", "level": "INFO", "message": "Validation completed", "iou": 0.49983757734298706, "dice": 0.49991878867149353, "pixel_accuracy": 0.9996751546859741, "mean_iou": 0.49983757734298706, "confusion_matrix": 779613.25, "val_loss": 0.559028148651123}
+{"timestamp": "2025-10-15T21:15:44.373743", "level": "INFO", "message": "Epoch 28 completed", "iou": 0.49983757734298706, "dice": 0.49991878867149353, "pixel_accuracy": 0.9996751546859741, "mean_iou": 0.49983757734298706, "confusion_matrix": 779613.25, "train_loss": 0.5600216463208199, "val_loss": 0.559028148651123, "epoch": 28, "learning_rate": 2.072028711060486e-05}
+{"timestamp": "2025-10-15T21:15:46.920653", "level": "INFO", "message": "Epoch 29 started"}
+{"timestamp": "2025-10-15T21:15:50.505163", "level": "INFO", "message": "Step 233 completed", "step": 233, "batch": 0, "learning_rate": 2.072028711060486e-05}
+{"timestamp": "2025-10-15T21:16:11.972313", "level": "INFO", "message": "Validation started"}
+{"timestamp": "2025-10-15T21:16:15.167927", "level": "INFO", "message": "Training interrupted by user"}
+{"timestamp": "2025-10-15T21:16:15.175843", "level": "INFO", "message": "Training completed"}

@@ -59,8 +59,19 @@ class AlbumentationsSegmentationTransform:
         transformed = self.transform(image=image_np, mask=mask_np)
         
         # Convert back to tensors
-        image_tensor = torch.from_numpy(transformed['image']).permute(2, 0, 1).float() / 255.0
-        mask_tensor = torch.from_numpy(transformed['mask']).long()
+        if isinstance(transformed['image'], torch.Tensor):
+            # Already converted to tensor by ToTensorV2
+            image_tensor = transformed['image']
+        else:
+            # Convert from numpy
+            image_tensor = torch.from_numpy(transformed['image']).permute(2, 0, 1).float() / 255.0
+        
+        if isinstance(transformed['mask'], torch.Tensor):
+            # Already converted to tensor
+            mask_tensor = transformed['mask'].long()
+        else:
+            # Convert from numpy
+            mask_tensor = torch.from_numpy(transformed['mask']).long()
         
         return image_tensor, mask_tensor
 

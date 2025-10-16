@@ -94,16 +94,18 @@ class DiceLoss(nn.Module):
     Reference: https://arxiv.org/abs/1707.03237
     """
     
-    def __init__(self, smooth: float = 1e-5, reduction: str = 'mean'):
+    def __init__(self, smooth: float = 1e-5, reduction: str = 'mean', ignore_index: int = 255):
         """Initialize Dice Loss.
         
         Args:
             smooth: Smoothing factor to avoid division by zero
             reduction: Reduction method
+            ignore_index: Index to ignore in loss computation
         """
         super().__init__()
         self.smooth = smooth
         self.reduction = reduction
+        self.ignore_index = ignore_index
     
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Forward pass.
@@ -115,11 +117,26 @@ class DiceLoss(nn.Module):
         Returns:
             Dice loss
         """
-        # Convert targets to one-hot
-        targets_one_hot = F.one_hot(targets, num_classes=inputs.size(1)).permute(0, 3, 1, 2).float()
+        # Create mask for valid pixels (not ignore_index)
+        valid_mask = (targets != self.ignore_index)
+        
+        # Filter out ignore_index pixels
+        if valid_mask.sum() == 0:
+            return torch.tensor(0.0, device=inputs.device, requires_grad=True)
         
         # Apply softmax to inputs
         inputs = F.softmax(inputs, dim=1)
+        
+        # Get valid targets (clamp to valid range)
+        valid_targets = torch.clamp(targets, 0, inputs.size(1) - 1)
+        
+        # Convert targets to one-hot
+        targets_one_hot = F.one_hot(valid_targets, num_classes=inputs.size(1)).permute(0, 3, 1, 2).float()
+        
+        # Apply valid mask
+        valid_mask = valid_mask.unsqueeze(1).expand_as(inputs)
+        inputs = inputs * valid_mask
+        targets_one_hot = targets_one_hot * valid_mask
         
         # Compute Dice coefficient
         intersection = (inputs * targets_one_hot).sum(dim=(2, 3))
@@ -338,7 +355,7 @@ class CombinedLoss(nn.Module):
         self.lovasz_weight = lovasz_weight
         
         self.ce_loss = nn.CrossEntropyLoss(**kwargs)
-        self.dice_loss = DiceLoss()
+        self.dice_loss = DiceLoss(**kwargs)
         self.focal_loss = FocalLoss() if focal_weight > 0 else None
         self.lovasz_loss = LovaszLoss() if lovasz_weight > 0 else None
     

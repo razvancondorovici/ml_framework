@@ -193,9 +193,13 @@ class SegmentationDataset(Dataset):
         
         # Apply transforms
         if self.transform is not None:
-            # For segmentation, we need to apply the same transform to both image and mask
-            if hasattr(self.transform, 'transforms'):
-                # Albumentations-style transform
+            # Check if this is an AlbumentationsSegmentationTransform
+            if hasattr(self.transform, '__class__') and 'AlbumentationsSegmentationTransform' in self.transform.__class__.__name__:
+                # Albumentations segmentation transform expects (image, mask)
+                image_tensor, mask_tensor = self.transform(image, mask)
+                return image_tensor, mask_tensor
+            elif hasattr(self.transform, 'transforms'):
+                # Standard Albumentations transform
                 transformed = self.transform(image=np.array(image), mask=np.array(mask))
                 image = Image.fromarray(transformed['image'])
                 mask = Image.fromarray(transformed['mask'])

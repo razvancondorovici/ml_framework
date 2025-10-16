@@ -7,6 +7,23 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union
 from datetime import datetime
 
+try:
+    from omegaconf import DictConfig, ListConfig
+except ImportError:
+    DictConfig = None
+    ListConfig = None
+
+
+class OmegaConfJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles OmegaConf objects."""
+    
+    def default(self, obj):
+        if DictConfig is not None and isinstance(obj, DictConfig):
+            return dict(obj)
+        elif ListConfig is not None and isinstance(obj, ListConfig):
+            return list(obj)
+        return super().default(obj)
+
 
 class StructuredLogger:
     """Structured logger that writes to JSONL and CSV files."""
@@ -73,7 +90,7 @@ class StructuredLogger:
         
         # Write to JSONL
         with open(self.jsonl_path, 'a') as f:
-            f.write(json.dumps(log_entry) + '\n')
+            f.write(json.dumps(log_entry, cls=OmegaConfJSONEncoder) + '\n')
         
         # Write to Python logger
         getattr(self.logger, level.lower())(message)

@@ -308,8 +308,10 @@ class SegmentationModel(nn.Module):
         else:
             # Use torchvision model
             if backbone == 'resnet50':
-                self.backbone = tv_models.resnet50(pretrained=pretrained)
-                self.feature_dims = [2048, 1024, 512, 256, 64]
+                resnet = tv_models.resnet50(pretrained=pretrained)
+                # Remove the final pooling and classifier layers
+                self.backbone = nn.Sequential(*list(resnet.children())[:-2])
+                self.feature_dims = [2048]  # ResNet50 final conv layer output
             else:
                 raise ValueError(f"Unsupported backbone: {backbone}")
         

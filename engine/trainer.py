@@ -312,11 +312,11 @@ class Trainer:
             })
             
             # Call batch end callbacks
-            self.callbacks.on_batch_end(batch_idx, loss=loss.item(), **kwargs)
+            self.callbacks.on_batch_end(batch_idx, loss=loss.item())
         
         # Compute epoch metrics
         epoch_metrics = self.metrics.compute()
-        epoch_metrics = {k: v.item() if hasattr(v, 'item') else v for k, v in epoch_metrics.items()}
+        epoch_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (v.item() if hasattr(v, 'item') else v) for k, v in epoch_metrics.items()}
         epoch_metrics['train_loss'] = total_loss / num_batches
         
         return epoch_metrics
@@ -362,7 +362,7 @@ class Trainer:
         
         # Compute epoch metrics
         epoch_metrics = self.metrics.compute()
-        epoch_metrics = {k: v.item() if hasattr(v, 'item') else v for k, v in epoch_metrics.items()}
+        epoch_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (v.item() if hasattr(v, 'item') else v) for k, v in epoch_metrics.items()}
         epoch_metrics['val_loss'] = total_loss / num_batches
         
         # Call validation end callbacks

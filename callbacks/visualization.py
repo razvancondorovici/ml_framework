@@ -282,8 +282,12 @@ class ConfusionMatrixVisualizer(Callback):
         
         # Create plot
         plt.figure(figsize=(10, 8))
+        
+        # Handle None class names
+        class_labels = self.class_names if self.class_names is not None else [f'Class {i}' for i in range(cm.shape[0])]
+        
         sns.heatmap(cm, annot=True, fmt='.2f' if self.normalize else 'd',
-                   xticklabels=self.class_names, yticklabels=self.class_names,
+                   xticklabels=class_labels, yticklabels=class_labels,
                    cmap='Blues')
         
         plt.title(f'Confusion Matrix - Epoch {epoch}')

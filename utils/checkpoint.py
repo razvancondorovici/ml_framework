@@ -50,18 +50,18 @@ def save_checkpoint(model: torch.nn.Module,
     # Save checkpoint
     torch.save(checkpoint, save_path)
     
-    # Create symlinks for best and last checkpoints
+    # Create copies for best and last checkpoints (avoid symlink permission issues on Windows)
     if is_best:
         best_path = save_path.parent / 'best.pt'
         if best_path.exists():
             best_path.unlink()
-        best_path.symlink_to(save_path.name)
+        shutil.copy2(save_path, best_path)
     
     if is_last:
         last_path = save_path.parent / 'last.pt'
         if last_path.exists():
             last_path.unlink()
-        last_path.symlink_to(save_path.name)
+        shutil.copy2(save_path, last_path)
 
 
 def load_checkpoint(checkpoint_path: Union[str, Path],
