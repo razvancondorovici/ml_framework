@@ -8,13 +8,13 @@ experiment:
 data:
   dataset_type: segmentation
   # Kaggle input paths - replace 'your-dataset' with your actual dataset name
-  data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/images
+  data_dir: /kaggleQ/input/melanodet-markerssegmentation/dataset/train/images
   mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/masks
   val_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/images
   val_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/masks
   num_classes: 2  # Background and markers (binary segmentation)
   class_names: ['background', 'markers']
-  mask_format: 'rgb'
+  mask_format: 'indexed'
   train_split: 1.0  # Use all training data
   val_split: 1.0    # Use all validation data
   test_split: 0.0
@@ -39,27 +39,27 @@ model:
 
 loss:
   name: combined
-  ce_weight: 1.0
+  ce_weight: 0.25
   dice_weight: 1.0
-  focal_weight: 0.0
+  focal_weight: 1.0
   lovasz_weight: 0.0
   ignore_index: 255
 
 optimizer:
   name: adamw
-  lr: 1e-4  # Slightly higher learning rate for GPU (was 5e-5)
+  lr: 5e-5  # Lower learning rate for fine-tuning
   weight_decay: 1e-4
   betas: [0.9, 0.999]
   eps: 1e-8
 
 scheduler:
   name: cosine_warmup
-  warmup_epochs: 5   # Increased warmup for GPU (was 2)
-  total_epochs: 30   # Reduced for Kaggle time limits (was 50)
+  warmup_epochs: 2
+  total_epochs: 100
   min_lr: 1e-6
 
 training:
-  epochs: 30         # Reduced for Kaggle time limits (was 50)
+  epochs: 100         
   amp: true          # Enable AMP for GPU (was false)
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1  # Reduced for GPU (was 4)
@@ -73,7 +73,7 @@ callbacks:
   checkpoint:
     monitor: val_loss
     mode: min
-    save_top_k: 2    # Reduced to save space (was 3)
+    save_top_k: 1    # Reduced to save space (was 3)
     enabled: true
     save_last: true
     save_best: true
@@ -81,20 +81,20 @@ callbacks:
   early_stopping:
     monitor: val_loss
     mode: min
-    patience: 8      # Reduced patience for faster convergence (was 10)
+    patience: 10      # Reduced patience for faster convergence (was 10)
     enabled: true
   
   sample_visualizer:
     num_samples: 4
-    save_every_n_epochs: 10  # Less frequent to save time (was 5)
+    save_every_n_epochs: 5  # Less frequent to save time (was 5)
     enabled: true
   
   confusion_matrix:
-    save_every_n_epochs: 15  # Less frequent to save time (was 5)
+    save_every_n_epochs: 100  # Less frequent to save time (was 5)
     enabled: true
   
   learning_rate:
-    save_every_n_epochs: 10  # Less frequent to save time (was 5)
+    save_every_n_epochs: 5  # Less frequent to save time (was 5)
     enabled: true
 
 transforms:

@@ -13,35 +13,58 @@ class FocalLoss(nn.Module):
     Reference: https://arxiv.org/abs/1708.02002
     """
     
-    def __init__(self, alpha: float = 1.0, gamma: float = 2.0, reduction: str = 'mean'):
+    def __init__(self, alpha: float = 1.0, gamma: float = 2.0, reduction: str = 'mean', ignore_index: int = -100):
         """Initialize Focal Loss.
         
         Args:
             alpha: Weighting factor for rare class
             gamma: Focusing parameter
             reduction: Reduction method ('mean', 'sum', 'none')
+            ignore_index: Index to ignore in loss computation
         """
         super().__init__()
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
+        self.ignore_index = ignore_index
     
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Forward pass.
         
         Args:
-            inputs: Predicted logits (N, C)
-            targets: Target labels (N,)
+            inputs: Predicted logits (N, C, H, W) for segmentation or (N, C) for classification
+            targets: Target labels (N, H, W) for segmentation or (N,) for classification
             
         Returns:
             Focal loss
         """
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        # Handle segmentation case where inputs are (N, C, H, W) and targets are (N, H, W)
+        if len(inputs.shape) == 4 and len(targets.shape) == 3:
+            # Flatten for cross entropy computation
+            inputs_flat = inputs.view(inputs.size(0), inputs.size(1), -1).permute(0, 2, 1).contiguous().view(-1, inputs.size(1))
+            targets_flat = targets.view(-1)
+        else:
+            # Classification case
+            inputs_flat = inputs.view(-1, inputs.size(-1))
+            targets_flat = targets.view(-1)
+        
+        # Create mask for valid pixels (not ignore_index)
+        valid_mask = (targets_flat != self.ignore_index)
+        
+        # If no valid pixels, return zero loss
+        if valid_mask.sum() == 0:
+            return torch.tensor(0.0, device=inputs.device, requires_grad=True)
+        
+        # Compute cross entropy only on valid pixels
+        ce_loss = F.cross_entropy(inputs_flat, targets_flat, reduction='none', ignore_index=self.ignore_index)
         pt = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
         
+        # Apply valid mask
+        focal_loss = focal_loss * valid_mask.float()
+        
         if self.reduction == 'mean':
-            return focal_loss.mean()
+            return focal_loss.sum() / valid_mask.sum()
         elif self.reduction == 'sum':
             return focal_loss.sum()
         else:
@@ -356,7 +379,7 @@ class CombinedLoss(nn.Module):
         
         self.ce_loss = nn.CrossEntropyLoss(**kwargs)
         self.dice_loss = DiceLoss(**kwargs)
-        self.focal_loss = FocalLoss() if focal_weight > 0 else None
+        self.focal_loss = FocalLoss(**kwargs) if focal_weight > 0 else None
         self.lovasz_loss = LovaszLoss() if lovasz_weight > 0 else None
     
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
