@@ -224,17 +224,29 @@ class MultiLabelClassificationDataset(Dataset):
         return image, labels
 
 
-def create_classification_dataset(config: Dict[str, Any]) -> Dataset:
+def create_classification_dataset(config: Dict[str, Any], split: str = 'train') -> Dataset:
     """Create classification dataset from config.
     
     Args:
         config: Dataset configuration
+        split: Dataset split ('train', 'val', or 'test')
         
     Returns:
         Dataset instance
     """
+    # Determine data directory based on split
+    if split == 'train':
+        data_dir = config['train_data_dir']
+    elif split == 'val':
+        data_dir = config['val_data_dir']
+    elif split == 'test':
+        data_dir = config.get('test_data_dir')
+        if data_dir is None:
+            raise ValueError(f"Test split requested but test_data_dir not provided in config")
+    else:
+        raise ValueError(f"Invalid split: {split}. Must be 'train', 'val', or 'test'")
+    
     dataset_type = config.get('dataset_type', 'classification')
-    data_dir = config['data_dir']
     annotations_file = config.get('annotations_file')
     class_names = config.get('class_names')
     transform = config.get('transform')

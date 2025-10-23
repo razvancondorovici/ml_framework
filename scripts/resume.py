@@ -51,22 +51,38 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         train_dataset = create_segmentation_dataset({
             **data_config,
             'transform': train_transform
-        })
+        }, split='train')
         val_dataset = create_segmentation_dataset({
             **data_config,
             'transform': val_transform
-        })
+        }, split='val')
+        
+        # Create test dataset if test_data_dir is provided
         test_dataset = None
+        if 'test_data_dir' in data_config and 'test_mask_dir' in data_config:
+            test_transform = get_segmentation_transforms_from_config(config, split='val', num_classes=num_classes)
+            test_dataset = create_segmentation_dataset({
+                **data_config,
+                'transform': test_transform
+            }, split='test')
     else:
         train_dataset = create_classification_dataset({
             **data_config,
             'transform': train_transform
-        })
+        }, split='train')
         val_dataset = create_classification_dataset({
             **data_config,
             'transform': val_transform
-        })
+        }, split='val')
+        
+        # Create test dataset if test_data_dir is provided
         test_dataset = None
+        if 'test_data_dir' in data_config:
+            test_transform = get_default_classification_transforms(split='val')
+            test_dataset = create_classification_dataset({
+                **data_config,
+                'transform': test_transform
+            }, split='test')
     
     return train_dataset, val_dataset, test_dataset
 

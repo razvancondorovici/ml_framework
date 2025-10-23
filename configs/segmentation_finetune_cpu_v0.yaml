@@ -7,16 +7,15 @@ experiment:
 
 data:
   dataset_type: segmentation
-  data_dir: c:\Facultate\segmentation_markers\dataset\train\images
-  mask_dir: c:\Facultate\segmentation_markers\dataset\train\masks
+  train_data_dir: c:\Facultate\segmentation_markers\dataset\train\images
+  train_mask_dir: c:\Facultate\segmentation_markers\dataset\train\masks
   val_data_dir: c:\Facultate\segmentation_markers\dataset\val\images
   val_mask_dir: c:\Facultate\segmentation_markers\dataset\val\masks
+  test_data_dir: c:\Facultate\segmentation_markers\dataset\test\images  # Optional
+  test_mask_dir: c:\Facultate\segmentation_markers\dataset\test\masks  # Optional
   num_classes: 2  # Background and markers (binary segmentation)
   class_names: ['background', 'markers']
   mask_format: 'rgb'
-  train_split: 1.0  # Use all training data
-  val_split: 1.0    # Use all validation data
-  test_split: 0.0
 
 dataloader:
   batch_size: 2     # Small batch size for CPU and small dataset

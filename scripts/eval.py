@@ -46,12 +46,12 @@ def create_dataset(config: Dict[str, Any], split: str = 'val') -> Any:
         dataset = create_segmentation_dataset({
             **data_config,
             'transform': transform
-        })
+        }, split=split)
     else:
         dataset = create_classification_dataset({
             **data_config,
             'transform': transform
-        })
+        }, split=split)
     
     return dataset
 

@@ -234,29 +234,36 @@ class SegmentationDataset(Dataset):
         return image, mask
 
 
-def create_segmentation_dataset(config: Dict[str, Any]) -> Dataset:
+def create_segmentation_dataset(config: Dict[str, Any], split: str = 'train') -> Dataset:
     """Create segmentation dataset from config.
     
     Args:
         config: Dataset configuration
+        split: Dataset split ('train', 'val', or 'test')
         
     Returns:
         Dataset instance
     """
-    data_dir = config['data_dir']
-    mask_dir = config['mask_dir']
+    # Determine data and mask directories based on split
+    if split == 'train':
+        data_dir = config['train_data_dir']
+        mask_dir = config['train_mask_dir']
+    elif split == 'val':
+        data_dir = config['val_data_dir']
+        mask_dir = config['val_mask_dir']
+    elif split == 'test':
+        data_dir = config.get('test_data_dir')
+        mask_dir = config.get('test_mask_dir')
+        if data_dir is None or mask_dir is None:
+            raise ValueError(f"Test split requested but test_data_dir or test_mask_dir not provided in config")
+    else:
+        raise ValueError(f"Invalid split: {split}. Must be 'train', 'val', or 'test'")
     
     # Handle Kaggle environment paths
     if is_kaggle_environment():
         # Convert Windows paths to Kaggle paths
         data_dir = str(data_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
         mask_dir = str(mask_dir).replace('c:\\', '/kaggle/input/').replace('\\', '/')
-        
-        # Handle validation paths if they exist
-        if 'val_data_dir' in config:
-            config['val_data_dir'] = str(config['val_data_dir']).replace('c:\\', '/kaggle/input/').replace('\\', '/')
-        if 'val_mask_dir' in config:
-            config['val_mask_dir'] = str(config['val_mask_dir']).replace('c:\\', '/kaggle/input/').replace('\\', '/')
     
     annotations_file = config.get('annotations_file')
     class_names = config.get('class_names')

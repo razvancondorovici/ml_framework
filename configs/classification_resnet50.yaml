@@ -7,12 +7,11 @@ experiment:
 
 data:
   dataset_type: classification
-  data_dir: ./datasets/imagenet_subset
+  train_data_dir: ./datasets/imagenet_subset/train
+  val_data_dir: ./datasets/imagenet_subset/val
+  test_data_dir: ./datasets/imagenet_subset/test  # Optional
   num_classes: 10
   class_names: ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-  train_split: 0.8
-  val_split: 0.2
-  test_split: 0.0
 
 dataloader:
   batch_size: 32

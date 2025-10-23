@@ -7,13 +7,14 @@ experiment:
 
 data:
   dataset_type: multi_label
-  data_dir: ./datasets/multilabel
-  annotations_file: ./datasets/multilabel/annotations.csv
+  train_data_dir: ./datasets/multilabel/train
+  val_data_dir: ./datasets/multilabel/val
+  test_data_dir: ./datasets/multilabel/test  # Optional
+  train_annotations_file: ./datasets/multilabel/train/annotations.csv
+  val_annotations_file: ./datasets/multilabel/val/annotations.csv
+  test_annotations_file: ./datasets/multilabel/test/annotations.csv  # Optional
   num_classes: 20
   class_names: ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic_light', 'fire_hydrant', 'stop_sign', 'parking_meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow']
-  train_split: 0.8
-  val_split: 0.2
-  test_split: 0.0
 
 dataloader:
   batch_size: 32

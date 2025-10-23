@@ -8,16 +8,15 @@ experiment:
 data:
   dataset_type: segmentation
   # Kaggle input paths - replace 'your-dataset' with your actual dataset name
-  data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/images
-  mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/masks
+  train_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/images
+  train_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/train/masks
   val_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/images
   val_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/val/masks
+  test_data_dir: /kaggle/input/melanodet-markerssegmentation/dataset/test/images  # Optional
+  test_mask_dir: /kaggle/input/melanodet-markerssegmentation/dataset/test/masks  # Optional
   num_classes: 2  # Background and markers (binary segmentation)
   class_names: ['background', 'markers']
   mask_format: 'indexed'
-  train_split: 1.0  # Use all training data
-  val_split: 1.0    # Use all validation data
-  test_split: 0.0
 
 dataloader:
   batch_size: 2     # Increased for GPU (was 2 for CPU)

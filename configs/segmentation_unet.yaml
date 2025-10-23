@@ -7,14 +7,15 @@ experiment:
 
 data:
   dataset_type: segmentation
-  data_dir: ./datasets/segmentation/images
-  mask_dir: ./datasets/segmentation/masks
+  train_data_dir: ./datasets/segmentation/train/images
+  train_mask_dir: ./datasets/segmentation/train/masks
+  val_data_dir: ./datasets/segmentation/val/images
+  val_mask_dir: ./datasets/segmentation/val/masks
+  test_data_dir: ./datasets/segmentation/test/images  # Optional
+  test_mask_dir: ./datasets/segmentation/test/masks  # Optional
   num_classes: 21
   class_names: ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic_light', 'fire_hydrant', 'stop_sign', 'parking_meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow']
   mask_format: indexed
-  train_split: 0.8
-  val_split: 0.2
-  test_split: 0.0
 
 dataloader:
   batch_size: 16

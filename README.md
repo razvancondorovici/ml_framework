@@ -47,7 +47,10 @@ datasets/
 │   └── class2/
 │       ├── image3.jpg
 │       └── image4.jpg
-└── val/
+├── val/
+│   ├── class1/
+│   └── class2/
+└── test/  # Optional
     ├── class1/
     └── class2/
 ```
@@ -55,12 +58,19 @@ datasets/
 For **segmentation**, organize your data as:
 ```
 datasets/
-├── images/
-│   ├── image1.jpg
-│   └── image2.jpg
-└── masks/
-    ├── image1.png
-    └── image2.png
+├── train/
+│   ├── images/
+│   │   ├── image1.jpg
+│   │   └── image2.jpg
+│   └── masks/
+│       ├── image1.png
+│       └── image2.png
+├── val/
+│   ├── images/
+│   └── masks/
+└── test/  # Optional
+    ├── images/
+    └── masks/
 ```
 
 ### 2. Train a Model
@@ -107,11 +117,11 @@ experiment:
 
 data:
   dataset_type: classification
-  data_dir: ./datasets/my_dataset
+  train_data_dir: ./datasets/my_dataset/train
+  val_data_dir: ./datasets/my_dataset/val
+  test_data_dir: ./datasets/my_dataset/test  # Optional
   num_classes: 10
   class_names: ['class1', 'class2', ...]
-  train_split: 0.8
-  val_split: 0.2
 
 model:
   backbone: resnet50
