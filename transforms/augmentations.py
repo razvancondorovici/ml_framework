@@ -38,8 +38,56 @@ class AlbumentationsTransform:
 class AlbumentationsSegmentationTransform:
     """Wrapper for Albumentations transforms for segmentation tasks."""
     
-    def __init__(self, transform: A.Compose):
+    def __init__(self, transform: A.Compose, num_classes: int = 2, normalize_mask: bool = True):
         self.transform = transform
+        self.num_classes = num_classes
+        self.normalize_mask = normalize_mask
+    
+    def _normalize_mask(self, mask: np.ndarray) -> np.ndarray:
+        """Normalize mask values to valid class indices.
+        
+        Args:
+            mask: Input mask array
+            
+        Returns:
+            Normalized mask with values in range [0, num_classes-1]
+        """
+        if not self.normalize_mask:
+            return mask
+            
+        # Get unique values in the mask
+        unique_values = np.unique(mask)
+        
+        # For binary segmentation (2 classes), normalize to 0 and 1
+        if self.num_classes == 2:
+            # Handle common mask formats
+            if 255 in unique_values:
+                # Convert 255 to 1 (foreground)
+                mask = np.where(mask == 255, 1, mask)
+            
+            # Ensure all values are either 0 or 1
+            # Any non-zero value becomes 1 (foreground)
+            mask = np.where(mask > 0, 1, 0)
+            
+        else:
+            # For multi-class segmentation, ensure values are in valid range
+            # Map values to valid class indices
+            valid_values = np.arange(self.num_classes)
+            
+            # Create mapping for existing values to valid indices
+            value_mapping = {}
+            for i, val in enumerate(sorted(unique_values)):
+                if i < self.num_classes:
+                    value_mapping[val] = i
+                else:
+                    # If we have more unique values than classes, map extras to background
+                    value_mapping[val] = 0
+            
+            # Apply mapping
+            for old_val, new_val in value_mapping.items():
+                mask = np.where(mask == old_val, new_val, mask)
+        
+        return mask.astype(np.uint8)
     
     def __call__(self, image: Image.Image, mask: Image.Image) -> Tuple[torch.Tensor, torch.Tensor]:
         """Apply transform to PIL Image and mask.
@@ -54,6 +102,9 @@ class AlbumentationsSegmentationTransform:
         # Convert PIL to numpy
         image_np = np.array(image)
         mask_np = np.array(mask)
+        
+        # Normalize mask values before applying transforms
+        mask_np = self._normalize_mask(mask_np)
         
         # Apply Albumentations transform
         transformed = self.transform(image=image_np, mask=mask_np)
@@ -246,13 +297,15 @@ def get_torchvision_classification_transforms(config: Dict[str, Any],
 
 def get_segmentation_transforms(config: Dict[str, Any],
                               split: str = 'train',
-                              deterministic: bool = False) -> AlbumentationsSegmentationTransform:
+                              deterministic: bool = False,
+                              num_classes: int = 2) -> AlbumentationsSegmentationTransform:
     """Get segmentation transforms for a specific split.
     
     Args:
         config: Transform configuration
         split: Data split ('train', 'val', 'test')
         deterministic: Whether to use deterministic transforms
+        num_classes: Number of classes for mask normalization
         
     Returns:
         Segmentation transform pipeline
@@ -341,7 +394,7 @@ def get_segmentation_transforms(config: Dict[str, Any],
     # Create transform pipeline
     transform = A.Compose(transforms)
     
-    return AlbumentationsSegmentationTransform(transform)
+    return AlbumentationsSegmentationTransform(transform, num_classes=num_classes)
 
 
 def get_default_classification_transforms(image_size: int = 224,
@@ -371,13 +424,32 @@ def get_default_classification_transforms(image_size: int = 224,
     return get_classification_transforms(config, split)
 
 
+def get_segmentation_transforms_from_config(config: Dict[str, Any],
+                                           split: str = 'train',
+                                           num_classes: int = 2) -> AlbumentationsSegmentationTransform:
+    """Get segmentation transforms from config.
+    
+    Args:
+        config: Configuration dictionary containing transform settings
+        split: Data split ('train', 'val', 'test')
+        num_classes: Number of classes for mask normalization
+        
+    Returns:
+        Segmentation transform pipeline
+    """
+    transform_config = config.get('transforms', {})
+    return get_segmentation_transforms(transform_config, split, num_classes=num_classes)
+
+
 def get_default_segmentation_transforms(image_size: int = 512,
-                                      split: str = 'train') -> AlbumentationsSegmentationTransform:
+                                      split: str = 'train',
+                                      num_classes: int = 2) -> AlbumentationsSegmentationTransform:
     """Get default segmentation transforms.
     
     Args:
         image_size: Target image size
         split: Data split ('train', 'val', 'test')
+        num_classes: Number of classes for mask normalization
         
     Returns:
         Segmentation transform pipeline
@@ -396,4 +468,4 @@ def get_default_segmentation_transforms(image_size: int = 512,
         }
     }
     
-    return get_segmentation_transforms(config, split)
+    return get_segmentation_transforms(config, split, num_classes=num_classes)

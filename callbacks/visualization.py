@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, List, Tuple
 from PIL import Image
 import matplotlib.pyplot as plt
 from .base import Callback
-from utils.plotting import plot_sample_grid, plot_segmentation_overlay
+from utils.plotting import plot_sample_grid, plot_segmentation_overlay, plot_loss_curves
 
 
 class SampleVisualizer(Callback):
@@ -422,3 +422,137 @@ class LearningRateVisualizer(Callback):
         plt.tight_layout()
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         plt.close()
+
+
+class LossCurveVisualizer(Callback):
+    """Callback for visualizing training and validation loss curves."""
+    
+    def __init__(self, 
+                 save_dir: str, 
+                 save_every_n_epochs: int = 5,
+                 title: str = "Training Progress"):
+        """Initialize loss curve visualizer.
+        
+        Args:
+            save_dir: Directory to save visualizations
+            save_every_n_epochs: Save every N epochs
+            title: Plot title
+        """
+        super().__init__()
+        self.save_dir = Path(save_dir)
+        self.save_every_n_epochs = save_every_n_epochs
+        self.title = title
+        
+        # Create save directory
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Track loss history
+        self.train_losses = []
+        self.val_losses = []
+        self.epochs = []
+    
+    def on_epoch_end(self, epoch: int, **kwargs):
+        """Save loss curve plot at end of epoch.
+        
+        Args:
+            epoch: Current epoch number
+        """
+        if not self.trainer:
+            return
+        
+        # Get metrics from kwargs
+        metrics = kwargs.get('metrics', {})
+        
+        # Extract losses
+        train_loss = metrics.get('train_loss')
+        val_loss = metrics.get('val_loss')
+        
+        if train_loss is not None:
+            self.train_losses.append(train_loss)
+            self.epochs.append(epoch)
+        
+        if val_loss is not None:
+            self.val_losses.append(val_loss)
+        
+        # Only save plot every N epochs or if we have both train and val losses
+        if (epoch % self.save_every_n_epochs == 0 or 
+            (len(self.train_losses) > 0 and len(self.val_losses) > 0)):
+            self._create_loss_plot(epoch)
+    
+    def on_train_end(self, **kwargs):
+        """Save final loss curve plot at end of training."""
+        if len(self.train_losses) > 0:
+            self._create_loss_plot(self.epochs[-1] if self.epochs else 0, is_final=True)
+    
+    def _create_loss_plot(self, epoch: int, is_final: bool = False):
+        """Create loss curve plot.
+        
+        Args:
+            epoch: Current epoch number
+            is_final: Whether this is the final plot
+        """
+        if len(self.train_losses) == 0:
+            return
+        
+        # Prepare data for plotting
+        train_losses = self.train_losses.copy()
+        val_losses = self.val_losses.copy()
+        
+        # Pad val_losses with None if shorter than train_losses
+        while len(val_losses) < len(train_losses):
+            val_losses.append(None)
+        
+        # Filter out None values for plotting
+        plot_train_losses = train_losses
+        plot_val_losses = [v for v in val_losses if v is not None]
+        
+        # Create plot
+        if len(plot_val_losses) > 0:
+            # Both train and val losses available
+            plot_loss_curves(
+                train_losses=plot_train_losses,
+                val_losses=plot_val_losses,
+                save_path=self.save_dir / f'loss_curves_epoch_{epoch:03d}.png',
+                title=f'{self.title} - Epoch {epoch}'
+            )
+        else:
+            # Only train losses available
+            plt.figure(figsize=(10, 6))
+            epochs = range(1, len(plot_train_losses) + 1)
+            plt.plot(epochs, plot_train_losses, 'b-', label='Training Loss', linewidth=2)
+            
+            plt.title(f'{self.title} - Epoch {epoch}', fontsize=16, fontweight='bold')
+            plt.xlabel('Epoch', fontsize=12)
+            plt.ylabel('Loss', fontsize=12)
+            plt.legend(fontsize=12)
+            plt.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            save_path = self.save_dir / f'loss_curves_epoch_{epoch:03d}.png'
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.close()
+        
+        # Save final plot with a standard name
+        if is_final:
+            final_save_path = self.save_dir / 'loss_curves_final.png'
+            if len(plot_val_losses) > 0:
+                plot_loss_curves(
+                    train_losses=plot_train_losses,
+                    val_losses=plot_val_losses,
+                    save_path=final_save_path,
+                    title=f'{self.title} - Final'
+                )
+            else:
+                plt.figure(figsize=(10, 6))
+                epochs = range(1, len(plot_train_losses) + 1)
+                plt.plot(epochs, plot_train_losses, 'b-', label='Training Loss', linewidth=2)
+                
+                plt.title(f'{self.title} - Final', fontsize=16, fontweight='bold')
+                plt.xlabel('Epoch', fontsize=12)
+                plt.ylabel('Loss', fontsize=12)
+                plt.legend(fontsize=12)
+                plt.grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                plt.savefig(final_save_path, dpi=150, bbox_inches='tight')
+                plt.close()

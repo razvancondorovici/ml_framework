@@ -24,10 +24,10 @@ except ImportError:
     print_kaggle_info = lambda: None
 from datasets.classification import create_classification_dataset
 from datasets.segmentation import create_segmentation_dataset
-from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
+from transforms.augmentations import get_default_classification_transforms, get_segmentation_transforms_from_config
 from models.registry import build_classifier, build_segmentation_model
 from engine.trainer import Trainer
-from callbacks.visualization import SampleVisualizer, ConfusionMatrixVisualizer, LearningRateVisualizer
+from callbacks.visualization import SampleVisualizer, ConfusionMatrixVisualizer, LearningRateVisualizer, LossCurveVisualizer
 from callbacks.logging import MetricLogger, ProgressLogger, ModelSummaryLogger
 from callbacks.checkpoint import ModelCheckpoint, EarlyStopping
 from callbacks.base import CallbackList
@@ -47,8 +47,9 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
     
     # Get transforms
     if dataset_type == 'segmentation':
-        train_transform = get_default_segmentation_transforms(split='train')
-        val_transform = get_default_segmentation_transforms(split='val')
+        num_classes = data_config.get('num_classes', 2)
+        train_transform = get_segmentation_transforms_from_config(config, split='train', num_classes=num_classes)
+        val_transform = get_segmentation_transforms_from_config(config, split='val', num_classes=num_classes)
     else:
         train_transform = get_default_classification_transforms(split='train')
         val_transform = get_default_classification_transforms(split='val')
@@ -191,6 +192,15 @@ def create_callbacks(config: Dict[str, Any], run_folder: Path) -> CallbackList:
         callbacks.append(LearningRateVisualizer(
             save_dir=str(run_folder / 'plots'),
             save_every_n_epochs=lr_config.get('save_every_n_epochs', 10)
+        ))
+    
+    # Loss curve visualizer
+    loss_config = config.get('callbacks', {}).get('loss_curves', {})
+    if loss_config.get('enabled', True):
+        callbacks.append(LossCurveVisualizer(
+            save_dir=str(run_folder / 'plots'),
+            save_every_n_epochs=loss_config.get('save_every_n_epochs', 5),
+            title=loss_config.get('title', 'Training Progress')
         ))
     
     return CallbackList(callbacks)

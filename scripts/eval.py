@@ -16,7 +16,7 @@ from utils.logger import StructuredLogger
 from utils.checkpoint import load_checkpoint
 from datasets.classification import create_classification_dataset
 from datasets.segmentation import create_segmentation_dataset
-from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
+from transforms.augmentations import get_default_classification_transforms, get_segmentation_transforms_from_config
 from models.registry import build_classifier, build_segmentation_model
 from engine.evaluator import Evaluator
 
@@ -36,7 +36,8 @@ def create_dataset(config: Dict[str, Any], split: str = 'val') -> Any:
     
     # Get transforms
     if dataset_type == 'segmentation':
-        transform = get_default_segmentation_transforms(split=split)
+        num_classes = data_config.get('num_classes', 2)
+        transform = get_segmentation_transforms_from_config(config, split=split, num_classes=num_classes)
     else:
         transform = get_default_classification_transforms(split=split)
     
