@@ -29,8 +29,8 @@ model:
 
 loss:
   name: cross_entropy
-  alpha: 1.0
-  gamma: 2.0
+#  alpha: 1.0
+#  gamma: 2.0
 
 optimizer:
   name: adamw
