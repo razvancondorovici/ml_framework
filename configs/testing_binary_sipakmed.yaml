@@ -22,9 +22,9 @@ dataloader:
 
 model:
   backbone: timm_efficientnet_b0
-  freeze_backbone: False
+  freeze_backbone: true
   pretrained: true
-  dropout: 0.2
+  dropout: 0.3
 
 metrics:
   task: binary
