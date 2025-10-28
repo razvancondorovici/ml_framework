@@ -87,7 +87,7 @@ transforms:
   resize: 224
   horizontal_flip: true
   vertical_flip: false
-  rotation: 0
+  rotation: 15
   color_jitter: false
   hue_saturation_value: false
   gaussian_noise: false
