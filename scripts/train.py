@@ -339,12 +339,13 @@ def main():
     except Exception as e:
         logger.error(f"Training failed: {e}")
         raise
-
+    best_checkpoint_path = history["best_checkpoint"]
     # not entirely humanly generated
     if os.path.exists(config.data.get('test_config_file', " ")):
         logger.info(f"Starting the inference on {config.data.get('test_config_file', " ")}")
         with subprocess.Popen(
-                ["python3", "scripts/infer.py", "--config", config.data.get('test_config_file')],
+                ["python3", "scripts/infer.py", "--config", config.data.get('test_config_file'),
+                 "--checkpoint", best_checkpoint_path],
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT

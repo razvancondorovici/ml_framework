@@ -8,6 +8,8 @@ from pathlib import Path
 import torch
 from typing import Dict, Any
 
+from torch.utils.checkpoint import checkpoint
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -63,18 +65,19 @@ def main():
     """Main inference function."""
     # Parse arguments
     parser = get_config_parser()
+    parser.add_argument('--checkpoint', type=str, required=True, help='Path to model checkpoint')
     args = parser.parse_args()
     # Load configuration
     config = load_config(args.config, args.overrides)
-    
+    checkpoint_path = args.checkpoint
     # Print device info
     device_info = get_device_info()
     print(f"Device info: {device_info}")
 
-    config['output'] = os.path.join(os.path.dirname(os.path.dirname(config['checkpoint'])), "test")
+    config['output'] = os.path.join(os.path.dirname(os.path.dirname(checkpoint_path)), "test")
     # Create logger
     logger = StructuredLogger(Path(config['output']), 'inference')
-    logger.info("Starting inference", checkpoint=config['checkpoint'], input=config['input'])
+    logger.info("Starting inference", checkpoint=checkpoint_path, input=config['input'])
     
     try:
         # Create model
@@ -90,8 +93,8 @@ def main():
         )
         
         # Load checkpoint
-        print(f"Loading checkpoint: {config['checkpoint']}")
-        inferencer.load_checkpoint(config['checkpoint'])
+        print(f"Loading checkpoint: {checkpoint_path}")
+        inferencer.load_checkpoint(checkpoint_path)
         
         # Run inference
         print("Starting inference...")

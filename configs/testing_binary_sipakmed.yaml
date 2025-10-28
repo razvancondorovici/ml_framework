@@ -1,7 +1,6 @@
 # EfficientNet-B0 Classification Configuration
 # Example configuration for image classification with EfficientNet-B0
 
-checkpoint: /home/andra/Documents/ml_framework/runs/efficientnet_classification/20251027_152257/checkpoints/epoch_080_0.9715.pt
 input: /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/test
 
 experiment:
@@ -23,9 +22,6 @@ dataloader:
 
 model:
   backbone: timm_efficientnet_b0
-  pretrained: true
-  freeze_backbone: true
-  dropout: 0.3
 
 metrics:
   task: binary
@@ -40,11 +36,7 @@ callbacks:
     enabled: true
 
   confusion_matrix:
-    save_every_n_epochs: 10
-    enabled: true
-
-  learning_rate:
-    save_every_n_epochs: 10
+    save_every_n_epochs: 5
     enabled: true
 
 transforms:
