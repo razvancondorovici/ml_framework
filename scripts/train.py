@@ -2,6 +2,7 @@
 """Training script for PyTorch models."""
 
 import argparse
+import os.path
 import sys
 import subprocess
 from pathlib import Path
@@ -339,15 +340,17 @@ def main():
         logger.error(f"Training failed: {e}")
         raise
 
-    # AI generated
-    with subprocess.Popen(
-            ["python3", "scripts/infer.py", "--config", "configs/testing_binary_sipakmed.yaml"],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-    ) as proc:
-        for line in proc.stdout:
-            print(line, end="")
+    # not entirely humanly generated
+    if os.path.exists(config.data.get('test_config_file', " ")):
+        logger.info(f"Starting the inference on {config.data.get('test_config_file', " ")}")
+        with subprocess.Popen(
+                ["python3", "scripts/infer.py", "--config", config.data.get('test_config_file')],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+        ) as proc:
+            for line in proc.stdout:
+                print(line, end="")
 
 
 if __name__ == '__main__':

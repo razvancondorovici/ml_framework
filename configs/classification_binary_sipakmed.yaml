@@ -11,6 +11,7 @@ data:
   val_data_dir: /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/val
   test_data_dir: /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/test
   annotations_file: /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/metadata.csv
+  test_config_file: configs/testing_binary_sipakmed.yaml
   num_classes: 2
   class_names: ['normal', 'suspecte']
 
