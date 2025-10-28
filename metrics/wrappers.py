@@ -170,7 +170,11 @@ class MetricsWrapper:
             targets: Target labels
         """
         for metric in self.metrics.values():
-            metric.update(preds, targets)
+            if self.task == "binary":
+                preds_binary = torch.softmax(preds, dim=1)[:, 1]
+                metric.update(preds_binary, targets)
+            else:
+                metric.update(preds, targets)
     
     def compute(self) -> Dict[str, torch.Tensor]:
         """Compute all metrics.

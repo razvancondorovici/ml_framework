@@ -200,6 +200,7 @@ class EarlyStopping(Callback):
         
         # Get current metrics
         metrics = kwargs.get('metrics', {})
+        # Se va considera mereu F1 calculat in timpul validarii
         current_score = metrics.get(self.monitor, float('inf') if self.mode == 'min' else float('-inf'))
         
         # Check if score improved

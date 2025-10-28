@@ -171,6 +171,7 @@ class Trainer:
                         self.scheduler.step()
                 
                 # Combine metrics
+                # La combinarea celor 2, campurile comune se intersecteaza. Raman valorile de la val_metrics
                 epoch_metrics = {**train_metrics, **val_metrics}
                 
                 # Update history
@@ -337,7 +338,7 @@ class Trainer:
         epoch_metrics = self.metrics.compute()
         epoch_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (v.item() if hasattr(v, 'item') else v) for k, v in epoch_metrics.items()}
         epoch_metrics['val_loss'] = total_loss / num_batches
-        
+
         # Call validation end callbacks
         self.callbacks.on_validation_end(metrics=epoch_metrics)
         
