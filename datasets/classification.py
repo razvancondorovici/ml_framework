@@ -1,6 +1,7 @@
 """Classification dataset implementations."""
 
 import os
+import random
 import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Union, Dict, Any, Callable
@@ -78,6 +79,8 @@ class ImageClassificationDataset(Dataset):
             sus_labels = ["suspecte"] * len(sus_list)
             samples = list(zip(no_list, no_labels))
             samples.extend(zip(sus_list, sus_labels))
+            random.seed(42) # datele vor veni mereu shuffled, indiferent de cine apeleaza metoda!
+            random.shuffle(samples) # Posibil redundant; argument controlat de dataloader
 
         else: # Past functionality remains the same
             image_col = df.columns[0]
