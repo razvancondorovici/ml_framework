@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+import subprocess
 from pathlib import Path
 from typing import Dict, Any
 
@@ -311,6 +312,9 @@ def main():
         )
         
         # Train model
+        # ToDo: add functionality for training on k folds
+        # asta ar trebui cuprinsa intr-un alt for care sa cuprinda fit ul
+        # si un dataloader care sa citeasca din txt urile de pe cervi - sante
         print("Starting training...")
         epochs = config.get('training', {}).get('epochs', 100)
         history = trainer.fit(epochs=epochs, resume_from_checkpoint=args.resume)
@@ -334,6 +338,16 @@ def main():
     except Exception as e:
         logger.error(f"Training failed: {e}")
         raise
+
+    # AI generated
+    with subprocess.Popen(
+            ["python3", "scripts/infer.py", "--config", "configs/testing_binary_sipakmed.yaml"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+    ) as proc:
+        for line in proc.stdout:
+            print(line, end="")
 
 
 if __name__ == '__main__':

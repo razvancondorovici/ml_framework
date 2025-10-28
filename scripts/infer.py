@@ -2,8 +2,10 @@
 """Inference script for PyTorch models."""
 
 import argparse
+import os
 import sys
 from pathlib import Path
+import torch
 from typing import Dict, Any
 
 # Add project root to path
@@ -15,6 +17,7 @@ from utils.device import get_device_info
 from utils.logger import StructuredLogger
 from models.registry import build_classifier, build_segmentation_model
 from engine.inferencer import Inferencer
+from metrics.wrappers import MetricsWrapper
 
 
 def create_model(config: Dict[str, Any]) -> Any:
@@ -60,27 +63,18 @@ def main():
     """Main inference function."""
     # Parse arguments
     parser = get_config_parser()
-    parser.add_argument('--checkpoint', type=str, required=True, help='Path to model checkpoint')
-    parser.add_argument('--input', type=str, required=True, help='Path to input images (folder or CSV)')
-    parser.add_argument('--output', type=str, required=True, help='Path to save results')
-    parser.add_argument('--input-type', type=str, choices=['folder', 'csv'], default='folder', help='Type of input')
-    parser.add_argument('--image-column', type=str, default='image_path', help='Name of image column in CSV')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size for inference')
-    parser.add_argument('--num-workers', type=int, default=4, help='Number of workers for data loading')
-    parser.add_argument('--tta', action='store_true', help='Use test-time augmentation')
-    parser.add_argument('--device', type=str, help='Device to run inference on (cuda, cpu)')
     args = parser.parse_args()
-    
     # Load configuration
     config = load_config(args.config, args.overrides)
     
     # Print device info
     device_info = get_device_info()
     print(f"Device info: {device_info}")
-    
+
+    config['output'] = os.path.join(os.path.dirname(os.path.dirname(config['checkpoint'])), "test")
     # Create logger
-    logger = StructuredLogger(Path(args.output).parent, 'inference')
-    logger.info("Starting inference", checkpoint=args.checkpoint, input=args.input)
+    logger = StructuredLogger(Path(config['output']), 'inference')
+    logger.info("Starting inference", checkpoint=config['checkpoint'], input=config['input'])
     
     try:
         # Create model
@@ -91,28 +85,28 @@ def main():
         # Create inferencer
         print("Creating inferencer...")
         inferencer = Inferencer(
-            model=model,
-            config=config,
-            device=args.device
+            model=model, config=config,
+            device="cuda" if device_info["cuda_available"] else "cpu"
         )
         
         # Load checkpoint
-        print(f"Loading checkpoint: {args.checkpoint}")
-        inferencer.load_checkpoint(args.checkpoint)
+        print(f"Loading checkpoint: {config['checkpoint']}")
+        inferencer.load_checkpoint(config['checkpoint'])
         
         # Run inference
         print("Starting inference...")
         class_names = config.get('data', {}).get('class_names')
-        
-        if args.input_type == 'folder':
+        input_type = "folder" if os.path.isdir(config['input']) else "csv"
+
+        if input_type == 'folder':
             results = inferencer.predict_folder(
-                folder_path=args.input,
-                output_path=args.output,
+                folder_path=config['input'],
+                output_path=config['output'],
                 class_names=class_names,
-                batch_size=args.batch_size,
-                num_workers=args.num_workers
+                batch_size=config['dataloader']['batch_size'],
+                num_workers=config['dataloader']['num_workers']
             )
-        else:  # CSV
+        else:  # CSV - this functionality remained unchanged with "args"
             results = inferencer.predict_csv(
                 csv_path=args.input,
                 image_column=args.image_column,
@@ -125,18 +119,25 @@ def main():
         # Print results summary
         print(f"\nInference completed!")
         print(f"Processed {len(results['results'])} images")
-        print(f"Results saved to {args.output}")
-        
-        # Print sample predictions
+        print(f"Results saved to {config['output']}")
+
+        metrics_instance = MetricsWrapper(config['data'].get('num_classes', 10), config['metrics'].task,
+            average=config.get('average', 'macro'),
+            threshold=config.get('threshold', 0.5))
+        metrics_instance.update(torch.tensor(results['probabilities']), torch.tensor(results['results']['GT']))
+        test_metrics = metrics_instance.compute()
+        test_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (v.item() if hasattr(v, 'item') else v) for k, v in test_metrics.items()}
+
+        # Print sample predictions; actually the first 5 of them
         if len(results['results']) > 0:
             print("\nSample predictions:")
             print("=" * 50)
             sample_results = results['results'].head(5)
             for _, row in sample_results.iterrows():
                 if 'class_name' in row:
-                    print(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
+                    logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
                 else:
-                    print(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
+                    logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
         
         logger.info("Inference completed successfully", num_images=len(results['results']))
         
@@ -144,6 +145,10 @@ def main():
         logger.error(f"Inference failed: {e}")
         raise
 
+    print(test_metrics)
+    logger.info(test_metrics)
+
 
 if __name__ == '__main__':
+    print("RUNNING INFERENCE", "+="*34)
     main()

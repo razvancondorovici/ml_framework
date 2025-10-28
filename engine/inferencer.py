@@ -1,5 +1,5 @@
 """Inference engine for PyTorch models."""
-
+import os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -109,9 +109,9 @@ class Inferencer:
                 else:
                     outputs = self.model(inputs)
                 
-                # Store outputs
-                if return_logits:
-                    all_logits.append(outputs.cpu())
+                # Store outputs - Unimplemented?
+                # if return_logits:
+                #     all_logits.append(outputs.cpu())
                 
                 if return_probabilities:
                     if outputs.dim() == 4:  # Segmentation
@@ -221,7 +221,7 @@ class Inferencer:
             averaged_predictions = np.argmax(averaged_probabilities, axis=1)
         
         averaged_results['predictions'] = averaged_predictions
-        
+
         return averaged_results
     
     def predict_folder(self, 
@@ -259,6 +259,8 @@ class Inferencer:
         from datasets.classification import ImageClassificationDataset
         
         dataset = ImageClassificationDataset(
+            annotations_file=self.config.data.annotations_file,
+            class_names=class_names,
             data_dir=folder_path,
             transform=get_default_classification_transforms(split='test')
         )
@@ -284,17 +286,19 @@ class Inferencer:
         
         # Create results
         results_data = []
-        for i, image_file in enumerate(image_files):
+
+        for i, image_file in enumerate(dataset.samples):
             result = {
-                'image_path': str(image_file),
+                'image_path': str(image_file[0]),
                 'prediction': int(predictions[i]),
+                'GT': int(class_names.index(dataset.samples[i][1])),
                 'confidence': float(probabilities[i].max())
             }
             
-            # Add class name if provided
-            if class_names and predictions[i] < len(class_names):
-                result['class_name'] = class_names[predictions[i]]
-            
+            # Add class name if provided - I don't like how this looks
+            # if class_names and predictions[i] < len(class_names):
+            #     result['class_name'] = class_names[predictions[i]]
+
             # Add probabilities for each class
             if class_names:
                 for j, class_name in enumerate(class_names):
@@ -308,8 +312,8 @@ class Inferencer:
         
         # Save results
         if output_path:
-            output_path = Path(output_path)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path = Path(os.path.join(output_path, "analysis"))
+            output_path.mkdir(parents=True, exist_ok=True)
             
             # Save CSV
             csv_path = output_path.with_suffix('.csv')
