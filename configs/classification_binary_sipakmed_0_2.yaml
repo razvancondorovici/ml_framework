@@ -16,7 +16,7 @@ data:
   class_names: ['normal', 'suspecte']
 
 dataloader:
-  batch_size: 64
+  batch_size: 32
   num_workers: 2
   pin_memory: true
   persistent_workers: true
@@ -25,7 +25,7 @@ dataloader:
 model:
   backbone: timm_efficientnet_b0
   pretrained: true
-  freeze_backbone: true
+  freeze_backbone: false
   dropout: 0.3
 
 loss:
@@ -90,7 +90,7 @@ transforms:
   rotation: 15
   color_jitter: true
   hue_saturation_value: true
-  gaussian_noise: true
+  gaussian_noise: false
   cutout: false
   normalize:
     mean: [0.485, 0.456, 0.406]
