@@ -202,7 +202,7 @@ class Trainer:
         finally:
             # Call training end callbacks
             self.callbacks.on_train_end(**kwargs)
-        history['best_checkpoint'] = str(self.callbacks.callbacks[0].best_models[0]['path'])
+        history['best_checkpoint'] = str(self.callbacks.callbacks[0].best_models[-1]['path'])
         return history
     
     def _train_epoch(self) -> Dict[str, float]:
