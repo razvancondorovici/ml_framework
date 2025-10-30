@@ -16,7 +16,7 @@ from utils.device import get_device, move_to_device
 from utils.logger import StructuredLogger
 from utils.checkpoint import load_checkpoint
 from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
-
+from datasets.classification import ImageClassificationDatasetTxtFiles
 
 class Inferencer:
     """Inference engine for PyTorch models."""
@@ -367,7 +367,7 @@ class Inferencer:
             annotations_file=csv_path,
             transform=get_default_classification_transforms(split='test')
         )
-        
+
         # Create dataloader
         dataloader = DataLoader(
             dataset,
@@ -418,6 +418,99 @@ class Inferencer:
         
         return {
             'results': df,
+            'predictions': predictions,
+            'probabilities': probabilities
+        }
+
+    def predict_from_txt(self,
+                       txt_path: Union[str, Path],
+                       output_path: Optional[Union[str, Path]] = None,
+                       class_names: Optional[List[str]] = None,
+                       batch_size: int = 32,
+                       num_workers: int = 4) -> Dict[str, Any]:
+        """Predict on images in a txt file.
+
+        Args:
+            txt_path: Path to a txt file containing path to images
+            output_path: Path to save results
+            class_names: List of class names
+            batch_size: Batch size for inference
+            num_workers: Number of workers for data loading
+            **kwargs: Additional arguments
+
+        Returns:
+            Prediction results
+        """
+        folder_path = Path(txt_path)
+        # Create dataset
+
+        dataset = ImageClassificationDatasetTxtFiles(
+            txt_file=folder_path,
+            class_names=class_names,
+            transform=get_default_classification_transforms(split='test')
+        )
+
+        print("dataset in progress ... ")
+
+        # Create dataloader
+        dataloader = DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=True
+        )
+
+        # Make predictions
+        if self.use_tta:
+            results = self.predict_with_tta(dataloader)
+        else:
+            results = self.predict(dataloader)
+
+        # Create results dataframe
+        predictions = results['predictions']
+        probabilities = results['probabilities']
+
+        # Create results
+        results_data = []
+
+        for i, image_file in enumerate(dataset.samples):
+            result = {
+                'image_path': str(image_file[0]),
+                'prediction': int(predictions[i]),
+                'GT': int(class_names.index(dataset.samples[i][1])),
+                'confidence': float(probabilities[i].max())
+            }
+
+            # Add probabilities for each class
+            if class_names:
+                for j, class_name in enumerate(class_names):
+                    if j < probabilities.shape[1]:
+                        result[f'prob_{class_name}'] = float(probabilities[i, j])
+
+            results_data.append(result)
+
+        # Create dataframe
+        results_df = pd.DataFrame(results_data)
+        print("we have some results")
+
+        # Save results
+        if output_path:
+            output_path = Path(os.path.join(output_path, "analysis"))
+            output_path.mkdir(parents=True, exist_ok=True)
+
+            # Save CSV
+            csv_path = output_path.with_suffix('.csv')
+            results_df.to_csv(csv_path, index=False)
+
+            # Save JSON
+            json_path = output_path.with_suffix('.json')
+            results_df.to_json(json_path, orient='records', indent=2)
+
+            self.logger.info(f"Results saved to {csv_path} and {json_path}")
+
+        return {
+            'results': results_df,
             'predictions': predictions,
             'probabilities': probabilities
         }

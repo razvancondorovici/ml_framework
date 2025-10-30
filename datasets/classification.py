@@ -164,22 +164,22 @@ class ImageClassificationDatasetTxtFiles(Dataset):
     """
 
     def __init__(self,
-                 data_dir: Union[str, Path],
+                 txt_file: Union[str, Path],
                  class_names: Optional[List[str]] = None,
                  transform: Optional[Callable] = None,
                  target_transform: Optional[Callable] = None):
         """Initialize dataset.
 
         Args:
-            data_dir: Directory containing images
+            txt_file: Directory containing images
             class_names: List of class names (optional)
             transform: Image transformations
             target_transform: Target transformations
         """
-        self.data_dir = Path(data_dir)
+        self.data_dir = Path(txt_file)
         self.transform = transform
         self.target_transform = target_transform
-        self.samples = self._load_from_txt_files(self, txt_file=None)
+        self.samples = self._load_from_txt_files(self.data_dir)
 
         # Set up class mapping
         if class_names is not None:
@@ -198,60 +198,10 @@ class ImageClassificationDatasetTxtFiles(Dataset):
         """
         txt_file_path = open(txt_file, "r")  # reopen file in read+append mode
         samples = []
+        root_dir = os.path.dirname(os.path.dirname(txt_file))
         for file in txt_file_path.readlines():
-            cell_name = os.path.basename(file)
-            samples.append(file)
-
-    def _load_from_csv(self, annotations_file: Union[str, Path]) -> List[tuple]:
-        """Load samples from CSV file.
-
-        Expected CSV format:
-        - image_path, label
-        - or image_path, label1, label2, ... (for multi-label)
-        """
-        df = pd.read_csv(annotations_file)
-
-        # Assume first column is image path, rest are labels
-        image_col = df.columns[0]
-        label_cols = df.columns[1:]
-
-        samples = []
-        for _, row in df.iterrows():
-            image_path = self.data_dir / row[image_col]
-            if image_path.exists():
-                if len(label_cols) == 1:
-                    # Single label
-                    label = int(row[label_cols[0]])
-                else:
-                    # Multi-label (convert to list)
-                    label = [int(row[col]) for col in label_cols]
-                samples.append((str(image_path), label))
-
-        return samples
-
-    def _load_from_folders(self) -> List[tuple]:
-        """Load samples from folder structure.
-
-        Expected structure:
-        data_dir/
-        ├── class1/
-        │   ├── image1.jpg
-        │   └── image2.jpg
-        └── class2/
-            ├── image3.jpg
-            └── image4.jpg
-        """
-        samples = []
-
-        for class_dir in self.data_dir.iterdir():
-            if not class_dir.is_dir():
-                continue
-
-            class_name = class_dir.name
-            for image_file in class_dir.iterdir():
-                if image_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
-                    samples.append((str(image_file), class_name))
-
+            file = file.rstrip('\n')
+            samples.append((os.path.join(root_dir, file), file.split(os.sep)[0]))
         return samples
 
     def __len__(self) -> int:
