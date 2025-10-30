@@ -1,4 +1,5 @@
 """Inference engine for PyTorch models."""
+import copy
 import os
 import torch
 import torch.nn as nn
@@ -8,6 +9,7 @@ from typing import Dict, Any, Optional, List, Union, Tuple, Callable
 import numpy as np
 from pathlib import Path
 import pandas as pd
+import re
 from PIL import Image
 from tqdm import tqdm
 import json
@@ -442,7 +444,6 @@ class Inferencer:
             Prediction results
         """
         folder_path = Path(txt_path)
-        # Create dataset
 
         dataset = ImageClassificationDatasetTxtFiles(
             txt_file=folder_path,
@@ -450,69 +451,80 @@ class Inferencer:
             transform=get_default_classification_transforms(split='test')
         )
 
-        print("dataset in progress ... ")
+        # Create dataloader for every Unique ID
+        unique_ids = np.unique(list(map(lambda x: x[0].split(os.sep)[-1].split("_")[0], dataset.samples)))
+        results_dict, predictions_dict, probabilities_dict = {}, {}, {}
+        for id in unique_ids:
+            dataset_to_copy = copy.deepcopy(dataset)
+            pattern = re.compile(id)
+            filtered_samples = list(filter(lambda x: pattern.search(x[0]), dataset_to_copy.samples))
+            dataset_to_copy.samples = filtered_samples
+            # Create dataloader
+            dataloader = DataLoader(
+                dataset_to_copy,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+                pin_memory=True
+            )
 
-        # Create dataloader
-        dataloader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=True
-        )
+            # Make predictions
+            if self.use_tta:
+                results = self.predict_with_tta(dataloader)
+            else:
+                results = self.predict(dataloader)
 
-        # Make predictions
-        if self.use_tta:
-            results = self.predict_with_tta(dataloader)
-        else:
-            results = self.predict(dataloader)
+            # Create results dataframe
+            predictions = results['predictions']
+            probabilities = results['probabilities']
 
-        # Create results dataframe
-        predictions = results['predictions']
-        probabilities = results['probabilities']
+            # Create results
+            results_data = []
 
-        # Create results
-        results_data = []
+            for i, image_file in enumerate(dataset_to_copy.samples):
+                result = {
+                    'image_path': str(image_file[0]),
+                    'prediction': int(predictions[i]),
+                    'GT': int(class_names.index(dataset_to_copy.samples[i][1])),
+                    'confidence': float(probabilities[i].max()),
+                    'ID': str(image_file[0]).split(os.sep)[-1].split("_")[0]
+                }
 
-        for i, image_file in enumerate(dataset.samples):
-            result = {
-                'image_path': str(image_file[0]),
-                'prediction': int(predictions[i]),
-                'GT': int(class_names.index(dataset.samples[i][1])),
-                'confidence': float(probabilities[i].max())
-            }
+                # Add probabilities for each class
+                if class_names:
+                    for j, class_name in enumerate(class_names):
+                        if j < probabilities.shape[1]:
+                            result[f'prob_{class_name}'] = float(probabilities[i, j])
 
-            # Add probabilities for each class
-            if class_names:
-                for j, class_name in enumerate(class_names):
-                    if j < probabilities.shape[1]:
-                        result[f'prob_{class_name}'] = float(probabilities[i, j])
+                results_data.append(result)
 
-            results_data.append(result)
+            # Create dataframe
+            results_df = pd.DataFrame(results_data)
+            print("we have some results")
 
-        # Create dataframe
-        results_df = pd.DataFrame(results_data)
-        print("we have some results")
+            # Save results
+            if output_path:
+                output_path = Path(os.path.join(output_path, f"analysis_{id}"))
+                output_path.mkdir(parents=True, exist_ok=True)
 
-        # Save results
-        if output_path:
-            output_path = Path(os.path.join(output_path, "analysis"))
-            output_path.mkdir(parents=True, exist_ok=True)
+                # Save CSV
+                csv_path = output_path.with_suffix('.csv')
+                results_df.to_csv(csv_path, index=False)
 
-            # Save CSV
-            csv_path = output_path.with_suffix('.csv')
-            results_df.to_csv(csv_path, index=False)
+                # Save JSON
+                json_path = output_path.with_suffix('.json')
+                results_df.to_json(json_path, orient='records', indent=2)
 
-            # Save JSON
-            json_path = output_path.with_suffix('.json')
-            results_df.to_json(json_path, orient='records', indent=2)
+                self.logger.info(f"Results saved to {csv_path} and {json_path}")
 
-            self.logger.info(f"Results saved to {csv_path} and {json_path}")
+                results_dict[int(id)] = results_df
+                predictions_dict[int(id)] = predictions
+                probabilities_dict[int(id)] = probabilities
 
         return {
-            'results': results_df,
-            'predictions': predictions,
-            'probabilities': probabilities
+            'results': results_dict,
+            'predictions': predictions_dict,
+            'probabilities': probabilities_dict
         }
     
     def export_model(self, 

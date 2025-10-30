@@ -8,6 +8,8 @@ from datetime import datetime
 import os
 import sys
 from pathlib import Path
+
+import numpy as np
 import torch
 from typing import Dict, Any
 
@@ -84,6 +86,7 @@ def main():
     # Get only the test files
     test_files = list(filter(lambda f: "test" in f, os.listdir(input)))
     no_folds = len(test_files)
+    results_per_fold = {}
 
     for fold, test_subjects in enumerate(test_files):
         print(f"\n===== Fold {fold + 1}/{no_folds} =====")
@@ -121,36 +124,39 @@ def main():
 
             # Print results summary
             print(f"\nInference completed!")
-            print(f"Processed {len(results['results'])} images")
+            print(f"Processed one fold of images")
             print(f"Results saved to {output_per_fold}")
+            unique_IDS = list(results['results'].keys())
+            for id in unique_IDS:
 
-            metrics_instance = MetricsWrapper(config['data'].get('num_classes', 10), config['metrics'].task,
-                                              average=config.get('average', 'macro'),
-                                              threshold=config.get('threshold', 0.5))
-            metrics_instance.update(torch.tensor(results['probabilities']), torch.tensor(results['results']['GT']))
-            test_metrics = metrics_instance.compute()
-            test_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (
-                v.item() if hasattr(v, 'item') else v) for k, v in test_metrics.items()}
+                metrics_instance = MetricsWrapper(config['data'].get('num_classes', 10), config['metrics'].task,
+                                                  average=config.get('average', 'macro'),
+                                                  threshold=config.get('threshold', 0.5))
+                metrics_instance.update(torch.tensor(results['probabilities'][id]), torch.tensor(results['results'][id]['GT']))
+                test_metrics = metrics_instance.compute()
+                test_metrics = {k: v.float().mean().item() if hasattr(v, 'item') and v.numel() > 1 else (
+                    v.item() if hasattr(v, 'item') else v) for k, v in test_metrics.items()}
 
-            # Print sample predictions; actually the first 5 of them
-            if len(results['results']) > 0:
-                print("\nSample predictions:")
-                print("=" * 50)
-                sample_results = results['results'].head(5)
-                for _, row in sample_results.iterrows():
-                    if 'class_name' in row:
-                        logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
-                    else:
-                        logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
+                # Print sample predictions; actually the first 5 of them
+                if len(results['results'][id]) > 0:
+                    print("\nSample predictions:")
+                    print("=" * 50)
+                    sample_results = results['results'][id].head(5)
+                    for _, row in sample_results.iterrows():
+                        if 'class_name' in row:
+                            logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
+                        else:
+                            logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
 
-            logger.info("Inference completed successfully", num_images=len(results['results']))
+                logger.info(f"Inference completed successfully for the following IDs \n {unique_IDS}", num_images=len(results['results'][id]))
+                print(f"ID - {id}", "="*34)
+                print("=============TEST METRICS=============")
+                print(test_metrics)
+                logger.info(test_metrics)
 
         except Exception as e:
             logger.error(f"Subject Wise testing failed with: \n {e}")
             raise
-
-    print(test_metrics)
-    logger.info(test_metrics)
 
 
 if __name__ == '__main__':
