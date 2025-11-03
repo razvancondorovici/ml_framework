@@ -15,6 +15,7 @@ venv/
 runs/
 data/
 logs/
+Subject Wise Testing/
 *.pth
 *.pt
 *.pkl
