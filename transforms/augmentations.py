@@ -288,7 +288,7 @@ def get_torchvision_classification_transforms(config: Dict[str, Any],
     
     # Convert to tensor
     transforms.append(T.ToTensor())
-    
+
     # Normalization
     if 'normalize' in config:
         mean = config['normalize'].get('mean', [0.485, 0.456, 0.406])
@@ -402,7 +402,8 @@ def get_segmentation_transforms(config: Dict[str, Any],
 
 def get_default_classification_transforms(image_size: int = 224,
                                         split: str = 'train',
-                                        use_albumentations: bool = True) -> Union[T.Compose, AlbumentationsTransform]:
+                                        use_albumentations: bool = True,
+                                        normalize: bool = True) -> Union[T.Compose, AlbumentationsTransform]:
     """Get default classification transforms.
     
     Args:
@@ -415,14 +416,12 @@ def get_default_classification_transforms(image_size: int = 224,
     """
     config = {
         'resize': image_size,
-        'horizontal_flip': True,
+        'horizontal_flip': False,
         'color_jitter': split == 'train',
-        'normalize': {
-            'mean': [0.485, 0.456, 0.406],
-            'std': [0.229, 0.224, 0.225]
-        },
         'use_albumentations': use_albumentations
     }
+    if normalize:
+        config['normalize'] = {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}
     
     return get_classification_transforms(config, split)
 

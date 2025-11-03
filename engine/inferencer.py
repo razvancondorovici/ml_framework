@@ -106,8 +106,15 @@ class Inferencer:
                 
                 # Forward pass
                 if self.use_amp:
-                    with autocast():
+                    test_autocast = True
+                    with autocast(): # output-ul poate sa fie nan pt datele proprii
+                        outputs_test = self.model(inputs)
+                    if all(outputs_test[0,:].isnan()) and all(outputs_test[0,:].isnan()):
                         outputs = self.model(inputs)
+                        test_autocast = False
+                    if test_autocast:
+                        with autocast():
+                            outputs = self.model(inputs)
                 else:
                     outputs = self.model(inputs)
                 
@@ -448,7 +455,9 @@ class Inferencer:
         dataset = ImageClassificationDatasetTxtFiles(
             txt_file=folder_path,
             class_names=class_names,
-            transform=get_default_classification_transforms(split='test')
+            transform=get_default_classification_transforms(image_size=self.config.transforms.resize, split='test',
+                                                            use_albumentations=self.config.transforms.use_albumentations,
+                                                            normalize=("normalize" in self.config.transforms))
         )
 
         # Create dataloader for every Unique ID

@@ -86,7 +86,8 @@ def main():
     # Get only the test files
     test_files = list(filter(lambda f: "test" in f, os.listdir(input)))
     no_folds = len(test_files)
-    results_per_fold = {}
+    seen_ids = {}
+    aggregate_results = {"preds":[], "probs":[], "GT":[]}
 
     for fold, test_subjects in enumerate(test_files):
         print(f"\n===== Fold {fold + 1}/{no_folds} =====")
@@ -147,16 +148,40 @@ def main():
                             logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
                         else:
                             logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
+                if id not in seen_ids:
+                    aggregate_results["GT"].extend(np.array(results['results'][id]['GT']))
+                    aggregate_results["probs"].extend(np.array(results['probabilities'][id]))
+                    aggregate_results["preds"].extend(np.array(results['predictions'][id]))
+                    seen_ids[id] = test_metrics["accuracy"]
 
-                logger.info(f"Inference completed successfully for the following IDs \n {unique_IDS}", num_images=len(results['results'][id]))
-                print(f"ID - {id}", "="*34)
-                print("=============TEST METRICS=============")
-                print(test_metrics)
-                logger.info(test_metrics)
+                    logger.info(f"Inference completed successfully for the following ID \n {id}",
+                                num_images=len(results['results'][id]))
+                    print(f"ID - {id}", "=" * 34)
+                    print("=============TEST METRICS=============")
+                    print(test_metrics)
+                    logger.info(test_metrics)
+                else:
+                    print(f"this id was recycled {id}")
 
         except Exception as e:
             logger.error(f"Subject Wise testing failed with: \n {e}")
             raise
+        print("Mean Final Results")
+
+    from sklearn.metrics import f1_score, roc_auc_score, accuracy_score, classification_report
+    y_true = np.array(aggregate_results["GT"])
+    y_prob = np.array(aggregate_results["probs"])
+    y_pred = np.array(aggregate_results["preds"])
+
+    global_f1 = f1_score(y_true, y_pred)
+    global_auroc = roc_auc_score(y_true, y_prob[:,1])
+    global_acc = accuracy_score(y_true, y_pred)
+
+    logger.info(f"Accuracy -> {global_acc}")
+    logger.info(f"F1 score -> {global_f1}")
+    logger.info(f"AUROC    -> {global_auroc}")
+    logger.info(f"Classification report:")
+    logger.info(classification_report(y_true, y_pred, zero_division=0))
 
 
 if __name__ == '__main__':
