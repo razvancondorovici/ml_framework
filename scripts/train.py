@@ -27,7 +27,7 @@ from datasets.segmentation import create_segmentation_dataset
 from transforms.augmentations import get_default_classification_transforms, get_segmentation_transforms_from_config
 from models.registry import build_classifier, build_segmentation_model
 from engine.trainer import Trainer
-from callbacks.visualization import SampleVisualizer, ConfusionMatrixVisualizer, LearningRateVisualizer, LossCurveVisualizer
+from callbacks.visualization import SampleVisualizer, ConfusionMatrixVisualizer, LearningRateVisualizer, LossCurveVisualizer, AccuracyCurveVisualizer
 from callbacks.logging import MetricLogger, ProgressLogger, ModelSummaryLogger
 from callbacks.checkpoint import ModelCheckpoint, EarlyStopping
 from callbacks.base import CallbackList
@@ -217,6 +217,15 @@ def create_callbacks(config: Dict[str, Any], run_folder: Path) -> CallbackList:
             save_dir=str(run_folder / 'plots'),
             save_every_n_epochs=loss_config.get('save_every_n_epochs', 5),
             title=loss_config.get('title', 'Training Progress')
+        ))
+    
+    # Accuracy curve visualizer
+    accuracy_config = config.get('callbacks', {}).get('accuracy_curves', {})
+    if accuracy_config.get('enabled', True):
+        callbacks.append(AccuracyCurveVisualizer(
+            save_dir=str(run_folder / 'plots'),
+            save_every_n_epochs=accuracy_config.get('save_every_n_epochs', 10),
+            title=accuracy_config.get('title', 'Accuracy Progress')
         ))
     
     return CallbackList(callbacks)

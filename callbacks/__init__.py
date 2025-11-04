@@ -7,7 +7,8 @@ from .visualization import (
     SampleVisualizer, 
     ConfusionMatrixVisualizer, 
     LearningRateVisualizer,
-    LossCurveVisualizer
+    LossCurveVisualizer,
+    AccuracyCurveVisualizer
 )
 
 __all__ = [
@@ -22,5 +23,6 @@ __all__ = [
     'SampleVisualizer',
     'ConfusionMatrixVisualizer',
     'LearningRateVisualizer',
-    'LossCurveVisualizer'
+    'LossCurveVisualizer',
+    'AccuracyCurveVisualizer'
 ]

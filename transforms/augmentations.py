@@ -32,7 +32,12 @@ class AlbumentationsTransform:
         transformed = self.transform(image=image_np)
         
         # Convert back to tensor
-        return torch.from_numpy(transformed['image']).permute(2, 0, 1).float() / 255.0
+        if isinstance(transformed['image'], torch.Tensor):
+            # Already converted to tensor by ToTensorV2
+            return transformed['image']
+        else:
+            # Convert from numpy
+            return torch.from_numpy(transformed['image']).permute(2, 0, 1).float() / 255.0
 
 
 class AlbumentationsSegmentationTransform:

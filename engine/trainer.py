@@ -140,6 +140,8 @@ class Trainer:
             'val_metrics': [],
             'learning_rates': []
         }
+        # Store history on trainer instance so callbacks can access it
+        self.history = history
         
         # Call training start callbacks
         self.callbacks.on_train_start(**kwargs)

@@ -556,3 +556,196 @@ class LossCurveVisualizer(Callback):
                 plt.tight_layout()
                 plt.savefig(final_save_path, dpi=150, bbox_inches='tight')
                 plt.close()
+
+
+class AccuracyCurveVisualizer(Callback):
+    """Callback for visualizing training and validation accuracy curves."""
+    
+    def __init__(self, 
+                 save_dir: str, 
+                 save_every_n_epochs: int = 5,
+                 title: str = "Accuracy Progress"):
+        """Initialize accuracy curve visualizer.
+        
+        Args:
+            save_dir: Directory to save visualizations
+            save_every_n_epochs: Save every N epochs
+            title: Plot title
+        """
+        super().__init__()
+        self.save_dir = Path(save_dir)
+        self.save_every_n_epochs = save_every_n_epochs
+        self.title = title
+        
+        # Create save directory
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Track accuracy history
+        self.train_accuracies = []
+        self.val_accuracies = []
+        self.epochs = []
+        
+        # Track current epoch's train accuracy (before val overwrites it)
+        self.current_epoch = None
+        self.current_train_accuracy = None
+    
+    def on_epoch_end(self, epoch: int, **kwargs):
+        """Save accuracy curve plot at end of epoch.
+        
+        Args:
+            epoch: Current epoch number
+        """
+        if not self.trainer:
+            return
+        
+        # Store current epoch
+        self.current_epoch = epoch
+        
+        # Get train accuracy from trainer history
+        # History is updated before on_epoch_end is called, so latest entry is for current epoch
+        if hasattr(self.trainer, 'history') and 'train_metrics' in self.trainer.history:
+            train_metrics_list = self.trainer.history.get('train_metrics', [])
+            # Only add if we have a new entry (not already tracked)
+            if len(train_metrics_list) > len(self.train_accuracies):
+                # Get the latest train metrics (for current epoch)
+                latest_train_metrics = train_metrics_list[-1]
+                train_acc = latest_train_metrics.get('accuracy_macro')
+                if train_acc is not None:
+                    self.current_train_accuracy = train_acc
+                    self.train_accuracies.append(train_acc)
+                    if len(self.epochs) < len(self.train_accuracies):
+                        self.epochs.append(epoch)
+        
+        # Only save plot every N epochs or if we have both train and val accuracies
+        if (epoch % self.save_every_n_epochs == 0 or 
+            (len(self.train_accuracies) > 0 and len(self.val_accuracies) > 0)):
+            self._create_accuracy_plot(epoch)
+    
+    def on_validation_end(self, **kwargs):
+        """Capture validation accuracy at end of validation.
+        
+        Args:
+            metrics: Validation metrics dictionary
+        """
+        if not self.trainer:
+            return
+        
+        # Get metrics from kwargs
+        metrics = kwargs.get('metrics', {})
+        
+        # Extract validation accuracy
+        val_accuracy = metrics.get('accuracy_macro')
+        
+        if val_accuracy is not None:
+            self.val_accuracies.append(val_accuracy)
+            # Get current epoch from trainer if available
+            current_epoch = getattr(self.trainer, 'current_epoch', None)
+            if current_epoch is not None:
+                self.current_epoch = current_epoch
+                # Add epoch if we don't have one for this val accuracy yet
+                if len(self.epochs) < len(self.val_accuracies):
+                    self.epochs.append(current_epoch)
+    
+    def on_train_end(self, **kwargs):
+        """Save final accuracy curve plot at end of training."""
+        if len(self.train_accuracies) > 0:
+            final_epoch = self.epochs[-1] if self.epochs else 0
+            self._create_accuracy_plot(final_epoch, is_final=True)
+    
+    def _create_accuracy_plot(self, epoch: int, is_final: bool = False):
+        """Create accuracy curve plot.
+        
+        Args:
+            epoch: Current epoch number
+            is_final: Whether this is the final plot
+        """
+        if len(self.train_accuracies) == 0:
+            return
+        
+        # Prepare data for plotting
+        train_accuracies = self.train_accuracies.copy()
+        val_accuracies = self.val_accuracies.copy()
+        
+        # Pad val_accuracies with None if shorter than train_accuracies
+        while len(val_accuracies) < len(train_accuracies):
+            val_accuracies.append(None)
+        
+        # Filter out None values for plotting
+        plot_train_accuracies = train_accuracies
+        plot_val_accuracies = [v for v in val_accuracies if v is not None]
+        
+        # Create plot
+        if len(plot_val_accuracies) > 0:
+            # Both train and val accuracies available
+            plt.figure(figsize=(10, 6))
+            epochs_train = range(1, len(plot_train_accuracies) + 1)
+            epochs_val = range(1, len(plot_val_accuracies) + 1)
+            
+            plt.plot(epochs_train, plot_train_accuracies, 'b-', label='Training Accuracy', linewidth=2)
+            plt.plot(epochs_val, plot_val_accuracies, 'r-', label='Validation Accuracy', linewidth=2)
+            
+            plt.title(f'{self.title} - Epoch {epoch}', fontsize=16, fontweight='bold')
+            plt.xlabel('Epoch', fontsize=12)
+            plt.ylabel('Accuracy', fontsize=12)
+            plt.legend(fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.ylim([0, 1])  # Accuracy is between 0 and 1
+            
+            plt.tight_layout()
+            save_path = self.save_dir / f'accuracy_curves_epoch_{epoch:03d}.png'
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.close()
+        else:
+            # Only train accuracies available
+            plt.figure(figsize=(10, 6))
+            epochs = range(1, len(plot_train_accuracies) + 1)
+            plt.plot(epochs, plot_train_accuracies, 'b-', label='Training Accuracy', linewidth=2)
+            
+            plt.title(f'{self.title} - Epoch {epoch}', fontsize=16, fontweight='bold')
+            plt.xlabel('Epoch', fontsize=12)
+            plt.ylabel('Accuracy', fontsize=12)
+            plt.legend(fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.ylim([0, 1])
+            
+            plt.tight_layout()
+            save_path = self.save_dir / f'accuracy_curves_epoch_{epoch:03d}.png'
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.close()
+        
+        # Save final plot with a standard name
+        if is_final:
+            final_save_path = self.save_dir / 'accuracy_curves_final.png'
+            if len(plot_val_accuracies) > 0:
+                plt.figure(figsize=(10, 6))
+                epochs_train = range(1, len(plot_train_accuracies) + 1)
+                epochs_val = range(1, len(plot_val_accuracies) + 1)
+                
+                plt.plot(epochs_train, plot_train_accuracies, 'b-', label='Training Accuracy', linewidth=2)
+                plt.plot(epochs_val, plot_val_accuracies, 'r-', label='Validation Accuracy', linewidth=2)
+                
+                plt.title(f'{self.title} - Final', fontsize=16, fontweight='bold')
+                plt.xlabel('Epoch', fontsize=12)
+                plt.ylabel('Accuracy', fontsize=12)
+                plt.legend(fontsize=12)
+                plt.grid(True, alpha=0.3)
+                plt.ylim([0, 1])
+                
+                plt.tight_layout()
+                plt.savefig(final_save_path, dpi=150, bbox_inches='tight')
+                plt.close()
+            else:
+                plt.figure(figsize=(10, 6))
+                epochs = range(1, len(plot_train_accuracies) + 1)
+                plt.plot(epochs, plot_train_accuracies, 'b-', label='Training Accuracy', linewidth=2)
+                
+                plt.title(f'{self.title} - Final', fontsize=16, fontweight='bold')
+                plt.xlabel('Epoch', fontsize=12)
+                plt.ylabel('Accuracy', fontsize=12)
+                plt.legend(fontsize=12)
+                plt.grid(True, alpha=0.3)
+                plt.ylim([0, 1])
+                
+                plt.tight_layout()
+                plt.savefig(final_save_path, dpi=150, bbox_inches='tight')
+                plt.close()

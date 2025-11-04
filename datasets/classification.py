@@ -37,10 +37,10 @@ class ImageClassificationDataset(Dataset):
         
         if annotations_file is not None:
             # Load from CSV
-            self.samples = self._load_from_csv(annotations_file)
+            self.samples = self._load_from_csv(annotations_file, class_names)
         else:
             # Load from folder structure
-            self.samples = self._load_from_folders()
+            self.samples = self._load_from_folders(class_names)
         
         # Set up class mapping
         if class_names is not None:
@@ -53,12 +53,16 @@ class ImageClassificationDataset(Dataset):
         self.class_to_idx = {name: idx for idx, name in enumerate(self.class_names)}
         self.num_classes = len(self.class_names)
     
-    def _load_from_csv(self, annotations_file: Union[str, Path]) -> List[tuple]:
+    def _load_from_csv(self, annotations_file: Union[str, Path], class_names: Optional[List[str]] = None) -> List[tuple]:
         """Load samples from CSV file.
         
         Expected CSV format:
         - image_path, label
         - or image_path, label1, label2, ... (for multi-label)
+        
+        Args:
+            annotations_file: Path to CSV file
+            class_names: Optional list of class names to filter by (only for string labels)
         """
         df = pd.read_csv(annotations_file)
         
@@ -72,7 +76,13 @@ class ImageClassificationDataset(Dataset):
             if image_path.exists():
                 if len(label_cols) == 1:
                     # Single label
-                    label = int(row[label_cols[0]])
+                    label = row[label_cols[0]]
+                    # If label is a string and class_names is provided, filter by class_names
+                    if isinstance(label, str) and class_names is not None:
+                        if label not in class_names:
+                            continue
+                    elif isinstance(label, (int, float)):
+                        label = int(label)
                 else:
                     # Multi-label (convert to list)
                     label = [int(row[col]) for col in label_cols]
@@ -80,7 +90,7 @@ class ImageClassificationDataset(Dataset):
         
         return samples
     
-    def _load_from_folders(self) -> List[tuple]:
+    def _load_from_folders(self, class_names: Optional[List[str]] = None) -> List[tuple]:
         """Load samples from folder structure.
         
         Expected structure:
@@ -91,14 +101,26 @@ class ImageClassificationDataset(Dataset):
         └── class2/
             ├── image3.jpg
             └── image4.jpg
+        
+        Args:
+            class_names: Optional list of class names to filter by. If provided,
+                        only folders matching these class names will be loaded.
         """
         samples = []
+        
+        # If class_names is provided, convert to set for faster lookup
+        allowed_classes = set(class_names) if class_names is not None else None
         
         for class_dir in self.data_dir.iterdir():
             if not class_dir.is_dir():
                 continue
             
             class_name = class_dir.name
+            
+            # Filter by class_names if provided
+            if allowed_classes is not None and class_name not in allowed_classes:
+                continue
+            
             for image_file in class_dir.iterdir():
                 if image_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
                     samples.append((str(image_file), class_name))
