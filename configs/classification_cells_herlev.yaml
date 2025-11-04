@@ -1,5 +1,5 @@
-# EfficientNet-B0 Classification Configuration
-# Example configuration for image classification with EfficientNet-B0
+# EfficientNet-B0 Classification Configuration for Google Colab
+# Example configuration for image classification with EfficientNet-B0 on Colab GPU
 
 experiment:
   name: 05_train_herlev_sipakmed_val_herlev_sipakmed
@@ -7,27 +7,27 @@ experiment:
 
 data:
   dataset_type: classification
-  # Can be a single directory (string) or a list of directories (will be merged)
-  # Example with single directory:
-  # train_data_dir: c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\small\train
-  # Example with multiple directories:
-  # train_data_dir:
-  #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\small\train
-  #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
+  # Update these paths to match your Colab setup:
+  # Option 1: Google Drive (recommended for large datasets)
+  # train_data_dir: /content/drive/MyDrive/datasets/herlev_grouped/train
+  # Option 2: Uploaded directly to Colab
+  # train_data_dir: /content/datasets/herlev_grouped/train
+  
+  # Example with multiple directories (update paths as needed):
   train_data_dir:
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\train
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/train
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/train
   val_data_dir:
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/val
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/val
   test_data_dir:  # Optional
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\test
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/test
   num_classes: 2
   class_names: ['normal', 'suspecte']
 
 dataloader:
-  batch_size: 32
-  num_workers: 4
+  batch_size: 32  # Good for T4 GPU, reduce to 16 if OOM
+  num_workers: 2  # Colab has limited CPU cores
   pin_memory: true
   persistent_workers: true
   prefetch_factor: 2
@@ -53,12 +53,12 @@ optimizer:
 scheduler:
   name: cosine_warmup
   warmup_epochs: 10
-  total_epochs: 101
+  total_epochs: 101  # Reduced for Colab session limits
   min_lr: 1e-6
 
 training:
-  epochs: 101
-  amp: true
+  epochs: 101  # Adjust based on your needs (Colab free tier: ~12 hours)
+  amp: true  # Mixed precision for GPU
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
 
@@ -71,22 +71,22 @@ callbacks:
   checkpoint:
     monitor: accuracy_macro
     mode: max
-    save_top_k: 5
+    save_top_k: 3  # Reduced to save space
     enabled: true
   
   early_stopping:
     monitor: accuracy_macro
     mode: max
-    patience: 20
+    patience: 15  # Adjusted for Colab
     enabled: true
   
   sample_visualizer:
-    num_samples: 4
+    num_samples: 8
     save_every_n_epochs: 5
     enabled: true
   
   confusion_matrix:
-    save_every_n_epochs: 5
+    save_every_n_epochs: 10
     enabled: true
   
   learning_rate:
@@ -111,3 +111,4 @@ transforms:
     mean: [0.485, 0.456, 0.406]
     std: [0.229, 0.224, 0.225]
   use_albumentations: true
+

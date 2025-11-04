@@ -44,8 +44,12 @@ except ImportError as e:
 # Or use the direct repository URL
 
 # Function to safely re-clone repository
-def safe_reclone_repository():
-    """Safely remove and re-clone the repository."""
+def safe_reclone_repository(branch_name=None):
+    """Safely remove and re-clone the repository, optionally switch to a branch.
+    
+    Args:
+        branch_name: Name of the branch to switch to (None = use default/main branch)
+    """
     original_cwd = os.getcwd()
     safe_dir = '/content'
     
@@ -69,6 +73,24 @@ def safe_reclone_repository():
         os.chdir(framework_path)
         print(f"Changed to framework directory: {os.getcwd()}")
         
+        # Switch to branch if specified
+        if branch_name:
+            print(f"Switching to branch: {branch_name}")
+            result = os.system(f'git checkout {branch_name}')
+            if result == 0:
+                print(f"✅ Successfully switched to branch: {branch_name}")
+                # Show current branch
+                current_branch = os.popen('git branch --show-current').read().strip()
+                print(f"Current branch: {current_branch}")
+            else:
+                print(f"⚠️ Failed to switch to branch: {branch_name}")
+                print("Available branches:")
+                os.system('git branch -a')
+        else:
+            # Show current branch
+            current_branch = os.popen('git branch --show-current').read().strip()
+            print(f"Current branch: {current_branch}")
+        
         # Add framework to Python path
         framework_path_str = '/content/ml_framework'
         if framework_path_str in sys.path:
@@ -85,8 +107,10 @@ def safe_reclone_repository():
             os.chdir('/content')
         return False
 
-# Clone repository
-success = safe_reclone_repository()
+# Clone repository and switch to branch
+# Set branch_name to None to use the default branch, or specify a branch name
+branch_name = None  # Change this to your branch name, e.g., "dev", "feature/new-model", etc.
+success = safe_reclone_repository(branch_name=branch_name)
 
 if success:
     # Import framework components
@@ -102,11 +126,11 @@ else:
 # If your dataset is stored on Google Drive, uncomment and run this cell
 
 # Mount Google Drive
-# drive_path = mount_google_drive()
-# if drive_path:
-#     print(f"✅ Google Drive mounted at: {drive_path}")
-# else:
-#     print("⚠️ Google Drive mounting failed or not needed")
+drive_path = mount_google_drive()
+if drive_path:
+    print(f"✅ Google Drive mounted at: {drive_path}")
+else:
+    print("⚠️ Google Drive mounting failed or not needed")
 
 # =============================================================================
 # CELL 5: Setup Colab Environment
