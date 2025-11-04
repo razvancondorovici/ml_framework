@@ -11,7 +11,7 @@ data:
   dataset_type: classification
   annotations_file: /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/metadata.csv
   num_classes: 2
-  class_names: ['normal', 'suspecte']
+#  class_names: ['normal', 'suspecte']
 
 dataloader:
   batch_size: 32
