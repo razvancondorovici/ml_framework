@@ -26,8 +26,8 @@ data:
   class_names: ['normal', 'suspecte']
 
 dataloader:
-  batch_size: 32  # Good for T4 GPU, reduce to 16 if OOM
-  num_workers: 2  # Colab has limited CPU cores
+  batch_size: 128  # Good for T4 GPU, reduce to 16 if OOM
+  num_workers: 8
   pin_memory: true
   persistent_workers: true
   prefetch_factor: 2
