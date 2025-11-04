@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 05_train_herlev_sipakmed_val_herlev_sipakmed
+  name: 09_train_herlev_sipakmed_val_sante
   seed: 42
 
 data:
@@ -18,12 +18,16 @@ data:
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\train
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
   val_data_dir:
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
+    - C:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\val
   test_data_dir:  # Optional
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\test
   num_classes: 2
   class_names: ['normal', 'suspecte']
+
+
+checkpoint: c:\Facultate\CerviAssist\CellsClassification\SourceCode\ml_framework\runs\05_train_herlev_sipakmed_val_herlev_sipakmed\20251104_160125\checkpoints\epoch_036_0.9862.pt
 
 dataloader:
   batch_size: 32

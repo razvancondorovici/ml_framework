@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0 on Colab GPU
 
 experiment:
-  name: tmp_test_val
+  name: 10_train_sante_val_sante
   seed: 42
 
 data:
@@ -15,11 +15,13 @@ data:
   
   # Example with multiple directories (update paths as needed):
   train_data_dir:
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/train
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/train
+    # - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/train
+    # - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/train
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sante_split/train
   val_data_dir:
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/val
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/val
+    # - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/val
+    # - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/val
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sante_split/val
   test_data_dir:  # Optional
     - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/test
   num_classes: 2
@@ -53,11 +55,11 @@ optimizer:
 scheduler:
   name: cosine_warmup
   warmup_epochs: 10
-  total_epochs: 101  # Reduced for Colab session limits
+  total_epochs: 101 
   min_lr: 1e-6
 
 training:
-  epochs: 10  
+  epochs: 101  
   amp: true  # Mixed precision for GPU
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
@@ -82,15 +84,15 @@ callbacks:
   
   sample_visualizer:
     num_samples: 8
-    save_every_n_epochs: 5
+    save_every_n_epochs: 20
     enabled: true
   
   confusion_matrix:
-    save_every_n_epochs: 10
+    save_every_n_epochs: 20
     enabled: true
   
   learning_rate:
-    save_every_n_epochs: 5
+    save_every_n_epochs: 20
     enabled: true
   
   accuracy_curves:
