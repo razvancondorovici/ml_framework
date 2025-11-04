@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0 on Colab GPU
 
 experiment:
-  name: colab_train_herlev_sipakmed
+  name: 05_train_herlev_sipakmed_val_herlev_sipakmed
   seed: 42
 
 data:
@@ -15,19 +15,19 @@ data:
   
   # Example with multiple directories (update paths as needed):
   train_data_dir:
-    - /content/drive/MyDrive/datasets/herlev_grouped/train
-    - /content/drive/MyDrive/datasets/sipakmed_grouped_per_subject/train
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/train
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/train
   val_data_dir:
-    - /content/drive/MyDrive/datasets/herlev_grouped/val
-    - /content/drive/MyDrive/datasets/sipakmed_grouped_per_subject/val
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/val
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/val
   test_data_dir:  # Optional
-    - /content/drive/MyDrive/datasets/herlev_grouped/test
+    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/test
   num_classes: 2
   class_names: ['normal', 'suspecte']
 
 dataloader:
-  batch_size: 32  # Good for T4 GPU, reduce to 16 if OOM
-  num_workers: 2  # Colab has limited CPU cores
+  batch_size: 128  # Good for T4 GPU, reduce to 16 if OOM
+  num_workers: 8
   pin_memory: true
   persistent_workers: true
   prefetch_factor: 2
@@ -53,11 +53,11 @@ optimizer:
 scheduler:
   name: cosine_warmup
   warmup_epochs: 10
-  total_epochs: 50  # Reduced for Colab session limits
+  total_epochs: 101  # Reduced for Colab session limits
   min_lr: 1e-6
 
 training:
-  epochs: 50  # Adjust based on your needs (Colab free tier: ~12 hours)
+  epochs: 101  # Adjust based on your needs (Colab free tier: ~12 hours)
   amp: true  # Mixed precision for GPU
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
