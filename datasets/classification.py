@@ -3,6 +3,7 @@
 import os
 import random
 import pandas as pd
+import re
 from pathlib import Path
 from typing import List, Optional, Union, Dict, Any, Callable
 import torch
@@ -50,7 +51,7 @@ class ImageClassificationDataset(Dataset):
         else:
             # Extract class names from samples
             unique_classes = sorted(set(label for _, label in self.samples))
-            self.class_names = [f"class_{i}" for i in unique_classes]
+            self.class_names = [i for i in unique_classes]
         
         self.class_to_idx = {name: idx for idx, name in enumerate(self.class_names)}
         self.num_classes = len(self.class_names)
@@ -71,12 +72,20 @@ class ImageClassificationDataset(Dataset):
             file_dir_kaggle_path = df.loc[df.index, df.columns[0]]
             relativ_paths = [kaggle_path[str(Path(kaggle_path)).find(mode):] for kaggle_path in file_dir_kaggle_path]
             normale = [no_path for no_path in relativ_paths if "normal" in no_path]
-            suspecte = [sus_path for sus_path in relativ_paths if "suspecte" in sus_path]
+            suspecte = [sus_path for sus_path in relativ_paths if "suspect" in sus_path]
             root_dir = os.path.dirname(annotations_file)
             no_list = [os.path.join(root_dir, normal_path) for normal_path in normale]
             sus_list = [os.path.join(root_dir, suspect_path) for suspect_path in suspecte]
-            no_labels = ["normal"] * len(no_list)
-            sus_labels = ["suspecte"] * len(sus_list)
+
+            pattern = re.compile(r"normal")
+            filtered = pattern.search(no_list[0])
+            no_str = no_list[0][filtered.regs[0][0]: filtered.endpos].split(os.sep)[0]
+            pattern = re.compile(r"suspect")
+            filtered = pattern.search(sus_list[0])
+            sus_str = sus_list[0][filtered.regs[0][0]: filtered.endpos].split(os.sep)[0]
+
+            no_labels = [no_str] * len(no_list)
+            sus_labels = [sus_str] * len(sus_list)
             samples = list(zip(no_list, no_labels))
             samples.extend(zip(sus_list, sus_labels))
             random.seed(42) # datele vor veni mereu shuffled, indiferent de cine apeleaza metoda!
@@ -187,7 +196,7 @@ class ImageClassificationDatasetTxtFiles(Dataset):
         else:
             # Extract class names from samples
             unique_classes = sorted(set(label for _, label in self.samples))
-            self.class_names = [f"class_{i}" for i in unique_classes]
+            self.class_names = [i for i in unique_classes]
 
         self.class_to_idx = {name: idx for idx, name in enumerate(self.class_names)}
         self.num_classes = len(self.class_names)

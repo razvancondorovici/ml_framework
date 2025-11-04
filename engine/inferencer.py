@@ -238,7 +238,8 @@ class Inferencer:
                       output_path: Optional[Union[str, Path]] = None,
                       class_names: Optional[List[str]] = None,
                       batch_size: int = 32,
-                      num_workers: int = 4) -> Dict[str, Any]:
+                      num_workers: int = 4,
+                      transforms_config: Dict[str, Any] = None) -> Dict[str, Any]:
         """Predict on images in a folder.
         
         Args:
@@ -247,6 +248,7 @@ class Inferencer:
             class_names: List of class names
             batch_size: Batch size for inference
             num_workers: Number of workers for data loading
+            transforms_config: to be written
             **kwargs: Additional arguments
             
         Returns:
@@ -256,7 +258,7 @@ class Inferencer:
         
         # Get image files
         image_files = []
-        for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
+        for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.BMP']:
             image_files.extend(folder_path.glob(f'**/*{ext}'))
         
         if not image_files:
@@ -271,7 +273,7 @@ class Inferencer:
             annotations_file=self.config.data.annotations_file,
             class_names=class_names,
             data_dir=folder_path,
-            transform=get_default_classification_transforms(split='test')
+            transform=get_default_classification_transforms(split='test', transforms_config=transforms_config)
         )
         
         # Create dataloader
@@ -295,7 +297,7 @@ class Inferencer:
         
         # Create results
         results_data = []
-
+        class_names = class_names if class_names else dataset.class_names
         for i, image_file in enumerate(dataset.samples):
             result = {
                 'image_path': str(image_file[0]),
@@ -456,9 +458,7 @@ class Inferencer:
             txt_file=folder_path,
             class_names=class_names,
             transform=get_default_classification_transforms(image_size=self.config.transforms.resize, split='test',
-                                                            use_albumentations=self.config.transforms.use_albumentations,
-                                                            normalize=("normalize" in self.config.transforms))
-        )
+                                                            transforms_config=self.config.transforms))
 
         # Create dataloader for every Unique ID
         unique_ids = np.unique(list(map(lambda x: x[0].split(os.sep)[-1].split("_")[0], dataset.samples)))
@@ -494,7 +494,7 @@ class Inferencer:
                 result = {
                     'image_path': str(image_file[0]),
                     'prediction': int(predictions[i]),
-                    'GT': int(class_names.index(dataset_to_copy.samples[i][1])),
+                    'GT': int(dataset.class_names.index(dataset_to_copy.samples[i][1])),
                     'confidence': float(probabilities[i].max()),
                     'ID': str(image_file[0]).split(os.sep)[-1].split("_")[0]
                 }

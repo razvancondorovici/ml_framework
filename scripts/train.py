@@ -53,8 +53,8 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         train_transform = get_segmentation_transforms_from_config(config, split='train', num_classes=num_classes)
         val_transform = get_segmentation_transforms_from_config(config, split='val', num_classes=num_classes)
     else:
-        train_transform = get_default_classification_transforms(split='train')
-        val_transform = get_default_classification_transforms(split='val')
+        train_transform = get_default_classification_transforms(split='train', transforms_config=config['transforms'])
+        val_transform = get_default_classification_transforms(split='val', transforms_config=config['transforms'])
     
     # Create datasets
     if dataset_type == 'segmentation':
@@ -88,7 +88,7 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         # Create test dataset if test_data_dir is provided
         test_dataset = None
         if 'test_data_dir' in data_config:
-            test_transform = get_default_classification_transforms(split='val')
+            test_transform = get_default_classification_transforms(split='val', transforms_config=config["transforms"])
             test_dataset = create_classification_dataset({
                 **data_config,
                 'transform': test_transform
@@ -244,6 +244,9 @@ def main():
     
     # Setup experiment
     run_folder = setup_experiment(config)
+    if args.resume:
+        run_folder = Path(os.path.join(run_folder, "resume"))
+
     print(f"Experiment folder: {run_folder}")
     
     # Set random seed
@@ -253,7 +256,7 @@ def main():
     # Print device info
     device_info = get_device_info()
     print(f"Device info: {device_info}")
-    
+    device = "cuda" if device_info["cuda_available"] else "cpu"
     # Create logger
     logger = StructuredLogger(run_folder, 'training')
     logger.info("Starting training", config=config)
@@ -308,7 +311,7 @@ def main():
             train_dataloader=train_dataloader,
             val_dataloader=val_dataloader,
             config=config,
-            device=args.device,
+            device=device,
             callbacks=callbacks
         )
         

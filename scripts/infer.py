@@ -107,7 +107,8 @@ def main():
                 output_path=config['output'],
                 class_names=class_names,
                 batch_size=config['dataloader']['batch_size'],
-                num_workers=config['dataloader']['num_workers']
+                num_workers=config['dataloader']['num_workers'],
+                transforms_config=config["transforms"]
             )
         else:  # CSV - this functionality remained unchanged with "args"
             results = inferencer.predict_csv(

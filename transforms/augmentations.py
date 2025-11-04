@@ -4,6 +4,7 @@ import torch
 import torchvision.transforms as T
 from torchvision.transforms import functional as F
 import albumentations as A
+# from albumentations.augmentations.mixing import MixUp
 from albumentations.pytorch import ToTensorV2
 from typing import Dict, Any, Optional, List, Union, Tuple
 import numpy as np
@@ -229,8 +230,11 @@ def get_albumentations_classification_transforms(config: Dict[str, Any],
                 p=0.3
             ))
         
-        if config.get('mixup', False):
-            transforms.append(A.MixUp(p=0.2))
+        # if config.get('mixup', False): Here we have an issue, to be discussed ...
+        #     transforms.append(MixUp(p=0.2))
+
+        if config.get('clahe', False):
+            transforms.append(A.CLAHE(clip_limit=2.0, tile_grid_size=(4, 4), p=0.3))
     
     # Normalization
     if 'normalize' in config:
@@ -401,28 +405,34 @@ def get_segmentation_transforms(config: Dict[str, Any],
 
 
 def get_default_classification_transforms(image_size: int = 224,
-                                        split: str = 'train',
-                                        use_albumentations: bool = True,
-                                        normalize: bool = True) -> Union[T.Compose, AlbumentationsTransform]:
+                                          split: str = 'train',
+                                          transforms_config: Dict[str, Any] = None) -> Union[T.Compose, AlbumentationsTransform]:
     """Get default classification transforms.
     
     Args:
         image_size: Target image size
         split: Data split ('train', 'val', 'test')
-        use_albumentations: Whether to use Albumentations
+        transforms_config: to be written ....
         
     Returns:
         Transform pipeline
     """
     config = {
         'resize': image_size,
-        'horizontal_flip': False,
-        'color_jitter': split == 'train',
-        'use_albumentations': use_albumentations
+        'horizontal_flip': transforms_config.get('horizontal_flip', False),
+        'vertical_flip': transforms_config.get('vertical_flip', False),
+        'rotation': transforms_config.get('rotation', False),
+        'hue_saturation_value': transforms_config.get('hue_saturation_value', False),
+        'gaussian_noise': transforms_config.get('gaussian_noise', False),
+        'cutout': transforms_config.get('cutout', False),
+        'mixup': transforms_config.get('mixup', False),
+        'clahe': transforms_config.get('clahe', False),
+        'use_albumentations': transforms_config.get('use_albumentations', False),
+        'normalize' : transforms_config['normalize']
     }
-    if normalize:
-        config['normalize'] = {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}
-    
+    if 'color_jitter' in transforms_config:
+        config['color_jitter'] = (split == 'train') & transforms_config['color_jitter']
+
     return get_classification_transforms(config, split)
 
 
