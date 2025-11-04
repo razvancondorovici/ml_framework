@@ -22,6 +22,15 @@ except ImportError:
     is_kaggle_environment = lambda: False
     setup_kaggle_environment = lambda: None
     print_kaggle_info = lambda: None
+
+# Import Colab utilities if available
+try:
+    from utils.colab_utils import is_colab_environment, setup_colab_environment, print_colab_info, convert_paths_to_colab
+except ImportError:
+    is_colab_environment = lambda: False
+    setup_colab_environment = lambda: None
+    print_colab_info = lambda: None
+    convert_paths_to_colab = lambda config, drive_path=None: config
 from datasets.classification import create_classification_dataset
 from datasets.segmentation import create_segmentation_dataset
 from transforms.augmentations import get_default_classification_transforms, get_segmentation_transforms_from_config
@@ -246,8 +255,20 @@ def main():
         print_kaggle_info()
         print(f"Kaggle working directory: {working_dir}")
     
+    # Setup Colab environment if running in Colab
+    if is_colab_environment():
+        print("Detected Google Colab environment - setting up...")
+        working_dir = setup_colab_environment()
+        print_colab_info()
+        print(f"Colab working directory: {working_dir}")
+    
     # Load configuration
     config = load_config(args.config, args.overrides)
+    
+    # Convert paths for Colab if needed
+    if is_colab_environment():
+        print("Converting paths for Colab environment...")
+        config = convert_paths_to_colab(config)
     
     # Setup experiment
     run_folder = setup_experiment(config)
