@@ -245,101 +245,110 @@ else:
 # CELL 9: Display Results and Download Checkpoints
 # =============================================================================
 
-import shutil
 from pathlib import Path
-import matplotlib.pyplot as plt
-import json
-from PIL import Image
+from google.colab import files
+import zipfile
+import os
 
-# Find the latest run
+# Find the latest run for the current experiment
 runs_dir = Path('/content/ml_framework/runs')
-if runs_dir.exists():
+if not runs_dir.exists():
+    print("⚠️ No runs directory found")
+else:
     run_folders = [f for f in runs_dir.iterdir() if f.is_dir()]
-    if run_folders:
-        # Get the most recent run
+    if not run_folders:
+        print("⚠️ No run folders found")
+    else:
+        # Get the most recent run (by modification time)
         latest_run = max(run_folders, key=lambda x: x.stat().st_mtime)
-        print(f"📁 Latest run: {latest_run.name}")
+        experiment_name = latest_run.name
+        print(f"📁 Latest run: {experiment_name}")
         
-        # Look for experiment folders
+        # Look for experiment folders within the run
         experiment_folders = [f for f in latest_run.iterdir() if f.is_dir()]
-        if experiment_folders:
+        if not experiment_folders:
+            print("⚠️ No experiment folders found in latest run")
+        else:
+            # Get the most recent experiment folder (timestamp folder)
             latest_experiment = max(experiment_folders, key=lambda x: x.stat().st_mtime)
             print(f"📁 Latest experiment: {latest_experiment.name}")
             
-            # Display training history
-            history_file = latest_experiment / 'training_history.json'
-            if history_file.exists():
-                with open(history_file, 'r') as f:
-                    history = json.load(f)
-                
-                # Plot training curves
-                fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-                
-                # Loss curves
-                if 'train_loss' in history:
-                    axes[0, 0].plot(history['train_loss'], label='Train Loss', marker='o')
-                if 'val_loss' in history:
-                    axes[0, 0].plot(history['val_loss'], label='Val Loss', marker='s')
-                axes[0, 0].set_title('Training Loss')
-                axes[0, 0].set_xlabel('Epoch')
-                axes[0, 0].set_ylabel('Loss')
-                axes[0, 0].legend()
-                axes[0, 0].grid(True)
-                
-                # Accuracy curves (classification)
-                if 'train_accuracy' in history:
-                    axes[0, 1].plot(history['train_accuracy'], label='Train Accuracy', marker='o')
-                if 'val_accuracy' in history:
-                    axes[0, 1].plot(history['val_accuracy'], label='Val Accuracy', marker='s')
-                axes[0, 1].set_title('Training Accuracy')
-                axes[0, 1].set_xlabel('Epoch')
-                axes[0, 1].set_ylabel('Accuracy')
-                axes[0, 1].legend()
-                axes[0, 1].grid(True)
-                
-                # Sample visualizations
-                samples_dir = latest_experiment / 'samples'
-                if samples_dir.exists():
-                    val_samples = list(samples_dir.glob('*_val.png'))
-                    if val_samples:
-                        latest_sample = max(val_samples, key=lambda x: x.stat().st_mtime)
-                        img = Image.open(latest_sample)
-                        axes[1, 0].imshow(img)
-                        axes[1, 0].set_title(f'Latest Validation Sample')
-                        axes[1, 0].axis('off')
-                
-                # Checkpoints info
-                checkpoints_dir = latest_experiment / 'checkpoints'
-                if checkpoints_dir.exists():
-                    checkpoints = list(checkpoints_dir.glob('*.pt'))
-                    axes[1, 1].text(0.1, 0.9, f"Checkpoints: {len(checkpoints)}", 
-                                   transform=axes[1, 1].transAxes, fontsize=12)
-                    axes[1, 1].text(0.1, 0.8, f"Best: best.pt", 
-                                   transform=axes[1, 1].transAxes, fontsize=12)
-                    axes[1, 1].text(0.1, 0.7, f"Last: last.pt", 
-                                   transform=axes[1, 1].transAxes, fontsize=12)
-                    axes[1, 1].axis('off')
-                
-                plt.tight_layout()
-                plt.show()
+            # Collect files to include in zip
+            files_to_zip = []
             
-            # List checkpoints for download
-            checkpoints_dir = latest_experiment / 'checkpoints'
-            if checkpoints_dir.exists():
-                print("\n📦 Available checkpoints:")
-                for ckpt in checkpoints_dir.glob('*.pt'):
-                    size_mb = ckpt.stat().st_size / (1024 * 1024)
-                    print(f"  - {ckpt.name} ({size_mb:.2f} MB)")
+            # 1. Best model checkpoint
+            best_ckpt = latest_experiment / 'checkpoints' / 'best.pt'
+            if best_ckpt.exists():
+                files_to_zip.append(('checkpoints/best.pt', best_ckpt))
+                print("✅ Found: best.pt")
+            else:
+                print("⚠️ best.pt not found")
+            
+            # 2. Latest accuracy_curves_epoch_xxx.png
+            plots_dir = latest_experiment / 'plots'
+            if plots_dir.exists():
+                accuracy_curves = list(plots_dir.glob('accuracy_curves_epoch_*.png'))
+                if accuracy_curves:
+                    # Sort by epoch number (extract from filename)
+                    def get_epoch_num(path):
+                        import re
+                        match = re.search(r'epoch_(\d+)', path.name)
+                        return int(match.group(1)) if match else 0
+                    
+                    latest_accuracy_curve = max(accuracy_curves, key=get_epoch_num)
+                    files_to_zip.append(('plots/' + latest_accuracy_curve.name, latest_accuracy_curve))
+                    print(f"✅ Found: {latest_accuracy_curve.name}")
+                else:
+                    print("⚠️ No accuracy_curves_epoch_*.png files found")
+            else:
+                print("⚠️ plots directory not found")
+            
+            # 3. scalars.csv
+            scalars_csv = latest_experiment / 'scalars.csv'
+            if scalars_csv.exists():
+                files_to_zip.append(('scalars.csv', scalars_csv))
+                print("✅ Found: scalars.csv")
+            else:
+                print("⚠️ scalars.csv not found")
+            
+            # 4. config.yaml
+            config_yaml = latest_experiment / 'config.yaml'
+            if config_yaml.exists():
+                files_to_zip.append(('config.yaml', config_yaml))
+                print("✅ Found: config.yaml")
+            else:
+                print("⚠️ config.yaml not found")
+            
+            # Create zip file if we have files to include
+            if files_to_zip:
+                # Create zip filename based on experiment name
+                zip_filename = f"{experiment_name}.zip"
+                zip_path = Path('/content') / zip_filename
                 
-                print("\n💾 To download checkpoints, run:")
-                print("   from google.colab import files")
-                print(f"   files.download('{checkpoints_dir / 'best.pt'}')")
-        else:
-            print("⚠️ No experiment folders found")
-    else:
-        print("⚠️ No run folders found")
-else:
-    print("⚠️ No runs directory found")
+                print(f"\n📦 Creating zip file: {zip_filename}")
+                
+                # Create zip file
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for arcname, file_path in files_to_zip:
+                        zipf.write(file_path, arcname)
+                        print(f"  Added: {arcname}")
+                
+                zip_size_mb = zip_path.stat().st_size / (1024 * 1024)
+                print(f"\n✅ Zip file created: {zip_filename} ({zip_size_mb:.2f} MB)")
+                
+                # Download the zip file
+                print(f"\n📥 Downloading {zip_filename}...")
+                try:
+                    files.download(str(zip_path))
+                    print(f"✅ Successfully downloaded: {zip_filename}")
+                    
+                    # Optionally clean up the zip file after download
+                    # Uncomment the next line if you want to delete it after downloading
+                    # zip_path.unlink()
+                    # print(f"🧹 Cleaned up: {zip_filename}")
+                except Exception as e:
+                    print(f"❌ Failed to download {zip_filename}: {e}")
+            else:
+                print("\n⚠️ No files found to zip")
 
-print("\n✅ Notebook execution complete!")
-
+print("\n✅ Download complete!")

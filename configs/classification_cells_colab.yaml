@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0 on Colab GPU
 
 experiment:
-  name: 05_train_herlev_sipakmed_val_herlev_sipakmed
+  name: tmp_test_val
   seed: 42
 
 data:
@@ -16,9 +16,7 @@ data:
   # Example with multiple directories (update paths as needed):
   train_data_dir:
     - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/train
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/train
   val_data_dir:
-    - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/val
     - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/sipakmed_grouped_per_subject/val
   test_data_dir:  # Optional
     - /content/drive/MyDrive/Facultate/CerviAssist/databases/CellsClassification/2025_11_03/all/herlev_grouped/test
