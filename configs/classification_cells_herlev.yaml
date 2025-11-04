@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 04_train_sipakmed_val_herlev
+  name: 05_train_herlev_sipakmed_val_herlev_sipakmed
   seed: 42
 
 data:
@@ -16,14 +16,14 @@ data:
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
   train_data_dir:
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\train
+    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
   val_data_dir:
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
+    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
   test_data_dir:  # Optional
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\test
   num_classes: 2
   class_names: ['normal', 'suspecte']
-
-checkpoint: c:\Facultate\CerviAssist\CellsClassification\SourceCode\ml_framework\runs\01_train_sipakmed_val_sipakmed\20251104_133838\checkpoints\epoch_009_0.9704.pt
 
 dataloader:
   batch_size: 32
@@ -53,11 +53,11 @@ optimizer:
 scheduler:
   name: cosine_warmup
   warmup_epochs: 10
-  total_epochs: 51
+  total_epochs: 101
   min_lr: 1e-6
 
 training:
-  epochs: 51
+  epochs: 101
   amp: true
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
@@ -77,7 +77,7 @@ callbacks:
   early_stopping:
     monitor: accuracy_macro
     mode: max
-    patience: 10
+    patience: 20
     enabled: true
   
   sample_visualizer:

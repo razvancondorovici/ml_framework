@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast
-from typing import Dict, Any, Optional, List, Union, Tuple
+from typing import Dict, Any, Optional, List, Union
+from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import roc_curve, precision_recall_curve, confusion_matrix
@@ -124,12 +125,29 @@ class Evaluator:
         all_predictions = torch.cat(all_predictions).numpy()
         all_targets = torch.cat(all_targets).numpy()
         
-        if all_probabilities:
+        # Convert probabilities if available
+        if len(all_probabilities) > 0:
             all_probabilities = torch.cat(all_probabilities).numpy()
+        else:
+            all_probabilities = None
         
         # Compute metrics
         metrics = self.metrics.compute()
-        metrics = {k: v.item() if hasattr(v, 'item') else v for k, v in metrics.items()}
+        # Convert metrics to Python scalars or lists
+        converted_metrics = {}
+        for k, v in metrics.items():
+            if isinstance(v, torch.Tensor):
+                # Check if tensor has multiple elements (per-class metrics)
+                if v.numel() == 1:
+                    # Scalar tensor - convert to Python float
+                    converted_metrics[k] = v.item()
+                else:
+                    # Multi-element tensor (per-class metrics) - convert to list
+                    converted_metrics[k] = v.cpu().numpy().tolist()
+            else:
+                # Already a Python type
+                converted_metrics[k] = v
+        metrics = converted_metrics
         metrics['loss'] = total_loss / num_batches
         
         # Create evaluation results
@@ -137,12 +155,12 @@ class Evaluator:
             'metrics': metrics,
             'predictions': all_predictions,
             'targets': all_targets,
-            'probabilities': all_probabilities if all_probabilities else None
+            'probabilities': all_probabilities
         }
         
         # Generate plots if requested
         if save_plots and save_dir:
-            self._generate_plots(results, class_names, save_dir)
+            self._generate_plots(results, save_dir, class_names)
         
         # Log results
         self.logger.info("Evaluation completed", **metrics)
@@ -151,14 +169,14 @@ class Evaluator:
     
     def _generate_plots(self, 
                        results: Dict[str, Any], 
-                       class_names: Optional[List[str]] = None,
-                       save_dir: Union[str, Path]):
+                       save_dir: Union[str, Path],
+                       class_names: Optional[List[str]] = None):
         """Generate evaluation plots.
         
         Args:
             results: Evaluation results
-            class_names: List of class names
             save_dir: Directory to save plots
+            class_names: List of class names
         """
         save_dir = Path(save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
@@ -167,7 +185,7 @@ class Evaluator:
         targets = results['targets']
         probabilities = results['probabilities']
         
-        # Confusion matrix
+        # Confusion matrix (matching training visualization)
         if len(np.unique(targets)) <= 20:  # Only for reasonable number of classes
             cm_path = save_dir / 'confusion_matrix.png'
             plot_confusion_matrix(
@@ -176,27 +194,6 @@ class Evaluator:
                 class_names=class_names,
                 save_path=cm_path,
                 title="Confusion Matrix"
-            )
-        
-        # ROC curves (for classification with probabilities)
-        if probabilities is not None and len(np.unique(targets)) <= 10:
-            roc_path = save_dir / 'roc_curves.png'
-            plot_roc_curves(
-                y_true=targets,
-                y_scores=probabilities,
-                class_names=class_names,
-                save_path=roc_path,
-                title="ROC Curves"
-            )
-            
-            # PR curves
-            pr_path = save_dir / 'pr_curves.png'
-            plot_pr_curves(
-                y_true=targets,
-                y_scores=probabilities,
-                class_names=class_names,
-                save_path=pr_path,
-                title="Precision-Recall Curves"
             )
     
     def evaluate_classification(self, 

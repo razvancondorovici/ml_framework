@@ -87,7 +87,9 @@ def load_checkpoint(checkpoint_path: Union[str, Path],
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
     
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    # Use weights_only=False to handle OmegaConf objects and other complex types
+    # This is safe because checkpoints are created by our own codebase
+    checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
     
     # Load model state
     if strict:

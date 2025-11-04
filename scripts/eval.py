@@ -4,7 +4,9 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from datetime import datetime
+import numpy as np
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -95,27 +97,104 @@ def create_model(config: Dict[str, Any]) -> Any:
     return model
 
 
+def setup_evaluation_folder(config: Dict[str, Any], 
+                           checkpoint_path: str,
+                           split: str,
+                           output: Optional[str] = None) -> Path:
+    """Setup evaluation folder structure similar to training.
+    
+    Args:
+        config: Configuration dictionary
+        checkpoint_path: Path to checkpoint file
+        split: Dataset split ('val', 'test')
+        output: Optional output path override
+        
+    Returns:
+        Path to evaluation folder
+    """
+    checkpoint_path = Path(checkpoint_path)
+    experiment_name = config.get('experiment', {}).get('name', 'unnamed_experiment')
+    
+    # If output is explicitly provided, use it
+    if output:
+        eval_folder = Path(output)
+        eval_folder.mkdir(parents=True, exist_ok=True)
+        return eval_folder
+    
+    # Try to infer run folder from checkpoint path
+    # Check if checkpoint is in runs/{experiment_name}/... structure
+    # Expected structure: runs/{experiment_name}/{timestamp}/checkpoints/...
+    run_folder = None
+    if 'runs' in checkpoint_path.parts:
+        # Find the runs directory
+        runs_idx = checkpoint_path.parts.index('runs')
+        if len(checkpoint_path.parts) > runs_idx + 1:
+            # Check if experiment name matches
+            checkpoint_exp_name = checkpoint_path.parts[runs_idx + 1]
+            if checkpoint_exp_name == experiment_name:
+                # Navigate up from checkpoint to find the run folder (timestamp folder)
+                # The run folder should be the parent of 'checkpoints' folder
+                current = checkpoint_path.parent
+                # If we're in a 'checkpoints' folder, go up one more level
+                if current.name == 'checkpoints':
+                    run_folder = current.parent
+                    # Verify it's under the experiment name
+                    if run_folder.parent.name == experiment_name:
+                        # Create evaluation subfolder in the same run
+                        eval_folder = run_folder / f'eval_{split}'
+                        eval_folder.mkdir(parents=True, exist_ok=True)
+                        return eval_folder
+                else:
+                    # Checkpoint might be directly in the timestamp folder
+                    # Look for the timestamp folder (parent of current)
+                    if current.parent.name == experiment_name:
+                        run_folder = current
+                        eval_folder = run_folder / f'eval_{split}'
+                        eval_folder.mkdir(parents=True, exist_ok=True)
+                        return eval_folder
+    
+    # If we couldn't infer the run folder, create a new evaluation folder
+    # Structure: runs/{experiment_name}/eval_{split}_{timestamp}/
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    eval_folder = Path('runs') / experiment_name / f'eval_{split}_{timestamp}'
+    eval_folder.mkdir(parents=True, exist_ok=True)
+    
+    return eval_folder
+
+
 def main():
     """Main evaluation function."""
     # Parse arguments
     parser = get_config_parser()
     parser.add_argument('--checkpoint', type=str, required=True, help='Path to model checkpoint')
     parser.add_argument('--split', type=str, default='val', choices=['val', 'test'], help='Dataset split to evaluate')
-    parser.add_argument('--output', type=str, help='Path to save evaluation results')
+    parser.add_argument('--output', type=str, help='Path to save evaluation results (overrides auto-detection)')
     parser.add_argument('--device', type=str, help='Device to evaluate on (cuda, cpu)')
     args = parser.parse_args()
     
     # Load configuration
     config = load_config(args.config, args.overrides)
     
+    # Setup evaluation folder (similar to training structure)
+    eval_folder = setup_evaluation_folder(config, args.checkpoint, args.split, args.output)
+    print(f"Evaluation folder: {eval_folder}")
+    
+    # Save config to evaluation folder
+    from utils.config import save_config
+    config_path = eval_folder / 'config.yaml'
+    save_config(config, config_path)
+    
+    # Create subdirectories similar to training
+    plots_dir = eval_folder / 'plots'
+    plots_dir.mkdir(exist_ok=True)
+    
     # Print device info
     device_info = get_device_info()
     print(f"Device info: {device_info}")
     
     # Create logger
-    log_dir = args.output or 'logs'
-    logger = StructuredLogger(log_dir, 'evaluation')
-    logger.info("Starting evaluation", checkpoint=args.checkpoint, split=args.split)
+    logger = StructuredLogger(eval_folder, 'evaluation')
+    logger.info("Starting evaluation", checkpoint=args.checkpoint, split=args.split, eval_folder=str(eval_folder))
     
     try:
         # Create dataset
@@ -143,11 +222,12 @@ def main():
         
         # Load checkpoint
         print(f"Loading checkpoint: {args.checkpoint}")
-        load_checkpoint(
+        epoch, best_metric, checkpoint_config = load_checkpoint(
             checkpoint_path=args.checkpoint,
             model=model,
             strict=False
         )
+        print(f"Loaded checkpoint from epoch {epoch}, best metric: {best_metric:.4f}")
         
         # Create evaluator
         print("Creating evaluator...")
@@ -160,46 +240,86 @@ def main():
         # Evaluate model
         print("Starting evaluation...")
         class_names = config.get('data', {}).get('class_names')
-        save_dir = Path(args.output) if args.output else None
         
+        # Save plots to plots directory
         if config.get('data', {}).get('dataset_type') == 'segmentation':
             results = evaluator.evaluate_segmentation(
                 dataloader=dataloader,
                 class_names=class_names,
                 save_plots=True,
-                save_dir=save_dir
+                save_dir=plots_dir
             )
         else:
             results = evaluator.evaluate_classification(
                 dataloader=dataloader,
                 class_names=class_names,
                 save_plots=True,
-                save_dir=save_dir
+                save_dir=plots_dir
             )
         
         # Print results
         print("\nEvaluation Results:")
         print("=" * 50)
         for metric, value in results['metrics'].items():
-            print(f"{metric}: {value:.4f}")
+            if isinstance(value, (list, np.ndarray)):
+                print(f"{metric}: {value}")
+            elif isinstance(value, (int, float)):
+                print(f"{metric}: {value:.4f}")
+            else:
+                print(f"{metric}: {value}")
         
         # Save results
-        if args.output:
-            output_path = Path(args.output)
-            output_path.mkdir(parents=True, exist_ok=True)
-            
-            # Save metrics
-            import json
-            metrics_path = output_path / 'metrics.json'
-            with open(metrics_path, 'w') as f:
-                json.dump(results['metrics'], f, indent=2)
-            
-            # Save predictions
-            import numpy as np
-            predictions_path = output_path / 'predictions.npy'
-            np.save(predictions_path, results['predictions'])
-            
-            print(f"\nResults saved to {output_path}")
+        import json
+        
+        # Save metrics
+        metrics_path = eval_folder / 'metrics.json'
+        with open(metrics_path, 'w') as f:
+            json.dump(results['metrics'], f, indent=2)
+        
+        # Save predictions
+        predictions_path = eval_folder / 'predictions.npy'
+        np.save(predictions_path, results['predictions'])
+        
+        # Save targets
+        targets_path = eval_folder / 'targets.npy'
+        np.save(targets_path, results['targets'])
+        
+        # Save probabilities if available
+        if results['probabilities'] is not None:
+            probabilities_path = eval_folder / 'probabilities.npy'
+            np.save(probabilities_path, results['probabilities'])
+        
+        # Save evaluation summary
+        summary = {
+            'checkpoint': str(args.checkpoint),
+            'split': args.split,
+            'epoch': epoch,
+            'best_metric_from_checkpoint': best_metric,
+            'num_samples': len(dataset),
+            'metrics': results['metrics']
+        }
+        
+        # Add per-class metrics if available
+        if 'per_class_accuracy' in results:
+            summary['per_class_accuracy'] = results['per_class_accuracy']
+        if 'top_k_accuracy' in results:
+            summary['top_k_accuracy'] = results['top_k_accuracy']
+        if 'per_class_iou' in results:
+            summary['per_class_iou'] = results['per_class_iou']
+            summary['mean_iou'] = results.get('mean_iou')
+        if 'per_class_dice' in results:
+            summary['per_class_dice'] = results['per_class_dice']
+            summary['mean_dice'] = results.get('mean_dice')
+        
+        summary_path = eval_folder / 'evaluation_summary.json'
+        with open(summary_path, 'w') as f:
+            json.dump(summary, f, indent=2)
+        
+        print(f"\nResults saved to {eval_folder}")
+        print(f"  - Metrics: {metrics_path}")
+        print(f"  - Plots: {plots_dir}")
+        print(f"  - Predictions: {predictions_path}")
+        print(f"  - Summary: {summary_path}")
         
         logger.info("Evaluation completed successfully", **results['metrics'])
         

@@ -5,9 +5,15 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Union, Dict, Any, Callable
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, ConcatDataset
 from PIL import Image
 import numpy as np
+
+# Handle OmegaConf ListConfig
+try:
+    from omegaconf import ListConfig
+except ImportError:
+    ListConfig = None
 
 
 class ImageClassificationDataset(Dataset):
@@ -249,12 +255,15 @@ class MultiLabelClassificationDataset(Dataset):
 def create_classification_dataset(config: Dict[str, Any], split: str = 'train') -> Dataset:
     """Create classification dataset from config.
     
+    Supports both single directory and list of directories. When a list is provided,
+    datasets from all directories are concatenated together.
+    
     Args:
         config: Dataset configuration
         split: Dataset split ('train', 'val', or 'test')
         
     Returns:
-        Dataset instance
+        Dataset instance (or ConcatDataset if multiple directories provided)
     """
     # Determine data directory based on split
     if split == 'train':
@@ -274,19 +283,42 @@ def create_classification_dataset(config: Dict[str, Any], split: str = 'train') 
     transform = config.get('transform')
     target_transform = config.get('target_transform')
     
-    if dataset_type == 'multi_label':
-        return MultiLabelClassificationDataset(
-            data_dir=data_dir,
-            annotations_file=annotations_file,
-            class_names=class_names,
-            transform=transform,
-            target_transform=target_transform
-        )
+    # Convert single directory to list for uniform handling
+    # Handle both Python lists and OmegaConf ListConfig
+    if isinstance(data_dir, (list, tuple)) or (ListConfig is not None and isinstance(data_dir, ListConfig)):
+        # Convert ListConfig to Python list if needed
+        if ListConfig is not None and isinstance(data_dir, ListConfig):
+            data_dir = list(data_dir)
     else:
-        return ImageClassificationDataset(
-            data_dir=data_dir,
-            annotations_file=annotations_file,
-            class_names=class_names,
-            transform=transform,
-            target_transform=target_transform
-        )
+        # Single directory - convert to list
+        data_dir = [data_dir]
+    
+    # Create datasets for each directory
+    datasets = []
+    for dir_path in data_dir:
+        # Convert to Path (handles both strings and OmegaConf types)
+        dir_path = Path(str(dir_path))
+        
+        if dataset_type == 'multi_label':
+            dataset = MultiLabelClassificationDataset(
+                data_dir=dir_path,
+                annotations_file=annotations_file,
+                class_names=class_names,
+                transform=transform,
+                target_transform=target_transform
+            )
+        else:
+            dataset = ImageClassificationDataset(
+                data_dir=dir_path,
+                annotations_file=annotations_file,
+                class_names=class_names,
+                transform=transform,
+                target_transform=target_transform
+            )
+        datasets.append(dataset)
+    
+    # Return single dataset or concatenated dataset
+    if len(datasets) == 1:
+        return datasets[0]
+    else:
+        return ConcatDataset(datasets)
