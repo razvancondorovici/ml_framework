@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 14_train_sante_val_sante_weightedSampler
+  name: 19_train_sante_sipakmed_herlev_val_sante_sipakmed_herlev
   seed: 42
 
 data:
@@ -110,6 +110,7 @@ transforms:
   hue_saturation_value: true
   gaussian_noise: true
   cutout: true
+  grayscale: true
   normalize:
     mean: [0.485, 0.456, 0.406]
     std: [0.229, 0.224, 0.225]

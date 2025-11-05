@@ -133,8 +133,14 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         train_transform = get_segmentation_transforms_from_config(config, split='train', num_classes=num_classes)
         val_transform = get_segmentation_transforms_from_config(config, split='val', num_classes=num_classes)
     else:
-        train_transform = get_default_classification_transforms(split='train')
-        val_transform = get_default_classification_transforms(split='val')
+        transform_config = data_config.get('transforms', {})
+        if transform_config:
+            from transforms.augmentations import get_classification_transforms
+            train_transform = get_classification_transforms(transform_config, split='train')
+            val_transform = get_classification_transforms(transform_config, split='val')
+        else:
+            train_transform = get_default_classification_transforms(split='train')
+            val_transform = get_default_classification_transforms(split='val')
     
     # Create datasets
     if dataset_type == 'segmentation':
