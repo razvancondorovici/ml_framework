@@ -23,6 +23,79 @@ from callbacks.visualization import SampleVisualizer, ConfusionMatrixVisualizer,
 from callbacks.logging import MetricLogger, ProgressLogger, ModelSummaryLogger
 from callbacks.checkpoint import ModelCheckpoint, EarlyStopping
 from callbacks.base import CallbackList
+from torch.utils.data import DataLoader, ConcatDataset, WeightedRandomSampler
+import numpy as np
+
+
+def create_weighted_sampler(dataset, dataset_type: str = 'classification'):
+    """Create a WeightedRandomSampler for balanced class sampling.
+    
+    Args:
+        dataset: Dataset instance (can be ConcatDataset or single dataset)
+        dataset_type: Type of dataset ('classification' or 'segmentation')
+        
+    Returns:
+        WeightedRandomSampler or None if dataset doesn't support weighted sampling
+    """
+    # Only apply to classification datasets
+    if dataset_type != 'classification':
+        return None
+    
+    # Extract labels from dataset
+    labels = []
+    
+    if isinstance(dataset, ConcatDataset):
+        # Handle ConcatDataset - extract labels from all sub-datasets
+        for sub_dataset in dataset.datasets:
+            if hasattr(sub_dataset, 'samples'):
+                for _, label in sub_dataset.samples:
+                    # Convert string labels to indices if needed
+                    if isinstance(label, str):
+                        label = sub_dataset.class_to_idx[label]
+                    labels.append(label)
+    elif hasattr(dataset, 'samples'):
+        # Handle single dataset
+        for _, label in dataset.samples:
+            # Convert string labels to indices if needed
+            if isinstance(label, str):
+                label = dataset.class_to_idx[label]
+            labels.append(label)
+    else:
+        # Dataset doesn't have samples attribute, can't create weighted sampler
+        return None
+    
+    if not labels:
+        return None
+    
+    # Convert to numpy array
+    labels = np.array(labels)
+    
+    # Count samples per class
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    num_classes = len(unique_labels)
+    
+    # Calculate class weights: inverse frequency
+    class_weights = 1.0 / counts.astype(np.float32)
+    # Normalize weights so they sum to num_classes
+    class_weights = class_weights / class_weights.sum() * num_classes
+    
+    # Create sample weights
+    sample_weights = class_weights[labels]
+    
+    # Create weighted sampler
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+    
+    # Print class distribution info
+    print(f"Class distribution:")
+    for label, count in zip(unique_labels, counts):
+        weight = class_weights[label]
+        print(f"  Class {label}: {count} samples, weight: {weight:.4f}")
+    
+    return sampler
 
 
 def create_datasets(config: Dict[str, Any]) -> tuple:
@@ -271,18 +344,34 @@ def main():
             print(f"Val dataset: {len(val_dataset)} samples")
         
         # Create data loaders
-        from torch.utils.data import DataLoader
-        
         dataloader_config = config.get('dataloader', {})
-        train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=dataloader_config.get('batch_size', 32),
-            shuffle=True,
-            num_workers=dataloader_config.get('num_workers', 4),
-            pin_memory=dataloader_config.get('pin_memory', True),
-            persistent_workers=dataloader_config.get('persistent_workers', True),
-            drop_last=dataloader_config.get('drop_last', False)
-        )
+        dataset_type = config.get('data', {}).get('dataset_type', 'classification')
+        
+        # Create weighted sampler for balanced class sampling (only for classification)
+        weighted_sampler = create_weighted_sampler(train_dataset, dataset_type)
+        
+        if weighted_sampler is not None:
+            print("Using WeightedRandomSampler for balanced class sampling")
+            train_dataloader = DataLoader(
+                train_dataset,
+                batch_size=dataloader_config.get('batch_size', 32),
+                sampler=weighted_sampler,  # Use sampler instead of shuffle
+                num_workers=dataloader_config.get('num_workers', 4),
+                pin_memory=dataloader_config.get('pin_memory', True),
+                persistent_workers=dataloader_config.get('persistent_workers', True),
+                drop_last=dataloader_config.get('drop_last', False)
+            )
+        else:
+            # Fallback to standard shuffling
+            train_dataloader = DataLoader(
+                train_dataset,
+                batch_size=dataloader_config.get('batch_size', 32),
+                shuffle=True,
+                num_workers=dataloader_config.get('num_workers', 4),
+                pin_memory=dataloader_config.get('pin_memory', True),
+                persistent_workers=dataloader_config.get('persistent_workers', True),
+                drop_last=dataloader_config.get('drop_last', False)
+            )
         
         val_dataloader = None
         if val_dataset:
