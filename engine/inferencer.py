@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torch.cuda.amp import autocast
 from typing import Dict, Any, Optional, List, Union, Tuple, Callable
 import numpy as np
@@ -11,11 +11,37 @@ import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 import json
+import shutil
 
 from utils.device import get_device, move_to_device
 from utils.logger import StructuredLogger
 from utils.checkpoint import load_checkpoint
 from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
+
+
+class InferenceImageDataset(Dataset):
+    """Simple dataset for inference on a list of image files."""
+    def __init__(self, image_files: List[Path], transform=None):
+        self.image_files = image_files
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.image_files)
+    
+    def __getitem__(self, idx):
+        image_path = self.image_files[idx]
+        try:
+            image = Image.open(image_path).convert('RGB')
+        except Exception as e:
+            # Log warning using print since we don't have logger access here
+            print(f"Warning: Error loading image {image_path}: {e}")
+            image = Image.new('RGB', (224, 224), (0, 0, 0))
+        
+        if self.transform:
+            image = self.transform(image)
+        
+        # Return dummy label (not used for inference)
+        return image, 0
 
 
 class Inferencer:
@@ -80,13 +106,15 @@ class Inferencer:
     def predict(self, 
                 dataloader: DataLoader,
                 return_probabilities: bool = True,
-                return_predictions: bool = True) -> Dict[str, np.ndarray]:
+                return_predictions: bool = True,
+                return_logits: bool = False) -> Dict[str, np.ndarray]:
         """Make predictions on given dataloader.
         
         Args:
             dataloader: Data loader for prediction
             return_probabilities: Whether to return probabilities
             return_predictions: Whether to return predictions
+            return_logits: Whether to return logits
             
         Returns:
             Dictionary containing predictions and probabilities
@@ -95,7 +123,20 @@ class Inferencer:
         all_probabilities = []
         all_logits = []
         
-        self.logger.info(f"Starting inference on {len(dataloader)} batches")
+        num_batches = len(dataloader)
+        self.logger.info(f"Starting inference on {num_batches} batches")
+        
+        if num_batches == 0:
+            self.logger.warning("Dataloader is empty - no batches to process")
+            # Return empty results with proper structure
+            results = {}
+            if return_probabilities:
+                results['probabilities'] = np.array([])
+            if return_predictions:
+                results['predictions'] = np.array([])
+            if return_logits:
+                results['logits'] = np.array([])
+            return results
         
         with torch.no_grad():
             for batch_idx, (inputs, _) in enumerate(tqdm(dataloader, desc="Inferencing")):
@@ -229,39 +270,40 @@ class Inferencer:
                       output_path: Optional[Union[str, Path]] = None,
                       class_names: Optional[List[str]] = None,
                       batch_size: int = 32,
-                      num_workers: int = 4) -> Dict[str, Any]:
+                      num_workers: int = 4,
+                      copy_images_to_class_folders: bool = True) -> Dict[str, Any]:
         """Predict on images in a folder.
         
         Args:
-            folder_path: Path to folder containing images
+            folder_path: Path to folder containing images (can be flat or have class subdirectories)
             output_path: Path to save results
             class_names: List of class names
             batch_size: Batch size for inference
             num_workers: Number of workers for data loading
-            **kwargs: Additional arguments
+            copy_images_to_class_folders: Whether to copy images to class folders
             
         Returns:
             Prediction results
         """
         folder_path = Path(folder_path)
         
-        # Get image files
+        # Get image files - search recursively
         image_files = []
-        for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
+        for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.JPG', '.JPEG', '.PNG', '.BMP', '.TIFF']:
             image_files.extend(folder_path.glob(f'**/*{ext}'))
+            image_files.extend(folder_path.glob(f'*{ext}'))  # Also check direct files
+        
+        # Remove duplicates and sort
+        image_files = sorted(list(set(image_files)))
         
         if not image_files:
             raise ValueError(f"No image files found in {folder_path}")
         
         self.logger.info(f"Found {len(image_files)} images in {folder_path}")
         
-        # Create dataset
-        from datasets.classification import ImageClassificationDataset
-        
-        dataset = ImageClassificationDataset(
-            data_dir=folder_path,
-            transform=get_default_classification_transforms(split='test')
-        )
+        # Create dataset using module-level class (required for multiprocessing)
+        transform = get_default_classification_transforms(split='test')
+        dataset = InferenceImageDataset(image_files, transform=transform)
         
         # Create dataloader
         dataloader = DataLoader(
@@ -278,22 +320,37 @@ class Inferencer:
         else:
             results = self.predict(dataloader)
         
+        # Check if we have results
+        if 'predictions' not in results or len(results['predictions']) == 0:
+            raise ValueError("No predictions generated. Check that the dataloader has batches and images are loading correctly.")
+        
         # Create results dataframe
         predictions = results['predictions']
         probabilities = results['probabilities']
         
+        # Convert class_names to regular Python list if it's OmegaConf ListConfig
+        try:
+            from omegaconf import ListConfig
+            if ListConfig is not None and isinstance(class_names, ListConfig):
+                class_names = list(class_names)
+        except ImportError:
+            pass
+        
         # Create results
         results_data = []
         for i, image_file in enumerate(image_files):
+            # Convert numpy int64 to Python int for indexing
+            pred_idx = int(predictions[i])
+            
             result = {
                 'image_path': str(image_file),
-                'prediction': int(predictions[i]),
+                'prediction': pred_idx,
                 'confidence': float(probabilities[i].max())
             }
             
             # Add class name if provided
-            if class_names and predictions[i] < len(class_names):
-                result['class_name'] = class_names[predictions[i]]
+            if class_names and pred_idx < len(class_names):
+                result['class_name'] = class_names[pred_idx]
             
             # Add probabilities for each class
             if class_names:
@@ -320,6 +377,33 @@ class Inferencer:
             results_df.to_json(json_path, orient='records', indent=2)
             
             self.logger.info(f"Results saved to {csv_path} and {json_path}")
+            
+            # Copy images to class folders if requested
+            if copy_images_to_class_folders:
+                images_dir = output_path.parent / f"{output_path.stem}_images"
+                images_dir.mkdir(parents=True, exist_ok=True)
+                
+                self.logger.info(f"Copying images to class folders in {images_dir}")
+                
+                # Copy each image to its predicted class folder
+                for i, image_file in enumerate(tqdm(image_files, desc="Copying images")):
+                    pred_idx = int(predictions[i])
+                    
+                    # Determine class name
+                    if class_names and pred_idx < len(class_names):
+                        class_name = class_names[pred_idx]
+                    else:
+                        class_name = f"class_{pred_idx}"
+                    
+                    # Create class folder
+                    class_folder = images_dir / class_name
+                    class_folder.mkdir(parents=True, exist_ok=True)
+                    
+                    # Copy image to class folder (preserve original filename)
+                    dest_path = class_folder / image_file.name
+                    shutil.copy2(image_file, dest_path)
+                
+                self.logger.info(f"Images copied to {images_dir}")
         
         return {
             'results': results_df,
@@ -333,7 +417,8 @@ class Inferencer:
                    output_path: Optional[Union[str, Path]] = None,
                    class_names: Optional[List[str]] = None,
                    batch_size: int = 32,
-                   num_workers: int = 4) -> Dict[str, Any]:
+                   num_workers: int = 4,
+                   copy_images_to_class_folders: bool = True) -> Dict[str, Any]:
         """Predict on images specified in a CSV file.
         
         Args:
@@ -343,6 +428,7 @@ class Inferencer:
             class_names: List of class names
             batch_size: Batch size for inference
             num_workers: Number of workers for data loading
+            copy_images_to_class_folders: Whether to copy images to class folders
             
         Returns:
             Prediction results
@@ -383,13 +469,21 @@ class Inferencer:
         predictions = results['predictions']
         probabilities = results['probabilities']
         
-        # Add predictions to original dataframe
-        df['prediction'] = predictions
+        # Convert class_names to regular Python list if it's OmegaConf ListConfig
+        try:
+            from omegaconf import ListConfig
+            if ListConfig is not None and isinstance(class_names, ListConfig):
+                class_names = list(class_names)
+        except ImportError:
+            pass
+        
+        # Add predictions to original dataframe (convert numpy int64 to int)
+        df['prediction'] = predictions.astype(int)
         df['confidence'] = probabilities.max(axis=1)
         
         # Add class name if provided
         if class_names:
-            df['class_name'] = df['prediction'].apply(lambda x: class_names[x] if x < len(class_names) else 'Unknown')
+            df['class_name'] = df['prediction'].apply(lambda x: class_names[int(x)] if int(x) < len(class_names) else 'Unknown')
         
         # Add probabilities for each class
         if class_names:
@@ -411,6 +505,37 @@ class Inferencer:
             df.to_json(json_path, orient='records', indent=2)
             
             self.logger.info(f"Results saved to {csv_path} and {json_path}")
+            
+            # Copy images to class folders if requested
+            if copy_images_to_class_folders:
+                images_dir = output_path.parent / f"{output_path.stem}_images"
+                images_dir.mkdir(parents=True, exist_ok=True)
+                
+                self.logger.info(f"Copying images to class folders in {images_dir}")
+                
+                # Copy each image to its predicted class folder
+                for _, row in tqdm(df.iterrows(), total=len(df), desc="Copying images"):
+                    pred_idx = int(row['prediction'])
+                    image_path = Path(row[image_column])
+                    
+                    # Determine class name
+                    if class_names and pred_idx < len(class_names):
+                        class_name = class_names[pred_idx]
+                    else:
+                        class_name = f"class_{pred_idx}"
+                    
+                    # Create class folder
+                    class_folder = images_dir / class_name
+                    class_folder.mkdir(parents=True, exist_ok=True)
+                    
+                    # Copy image to class folder (preserve original filename)
+                    if image_path.exists():
+                        dest_path = class_folder / image_path.name
+                        shutil.copy2(image_path, dest_path)
+                    else:
+                        self.logger.warning(f"Image not found: {image_path}")
+                
+                self.logger.info(f"Images copied to {images_dir}")
         
         return {
             'results': df,

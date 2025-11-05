@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 14_train_sante_val_sante_weightedSampler
+  name: 03_train_sipakmed_val_sante
   seed: 42
 
 data:
@@ -16,11 +16,11 @@ data:
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
   train_data_dir:
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\train
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\train
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\train
   val_data_dir:
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
-    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
+    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
     - C:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\val
   test_data_dir:  # Optional
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\test

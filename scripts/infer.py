@@ -69,6 +69,7 @@ def main():
     parser.add_argument('--num-workers', type=int, default=4, help='Number of workers for data loading')
     parser.add_argument('--tta', action='store_true', help='Use test-time augmentation')
     parser.add_argument('--device', type=str, help='Device to run inference on (cuda, cpu)')
+    parser.add_argument('--no-copy-images', action='store_true', help='Do not copy images to class folders')
     args = parser.parse_args()
     
     # Load configuration
@@ -88,6 +89,10 @@ def main():
         model = create_model(config)
         print(f"Model: {type(model).__name__}")
         
+        # Add TTA to config if flag is set
+        if args.tta:
+            config['tta'] = True
+        
         # Create inferencer
         print("Creating inferencer...")
         inferencer = Inferencer(
@@ -104,13 +109,16 @@ def main():
         print("Starting inference...")
         class_names = config.get('data', {}).get('class_names')
         
+        copy_images = not args.no_copy_images
+        
         if args.input_type == 'folder':
             results = inferencer.predict_folder(
                 folder_path=args.input,
                 output_path=args.output,
                 class_names=class_names,
                 batch_size=args.batch_size,
-                num_workers=args.num_workers
+                num_workers=args.num_workers,
+                copy_images_to_class_folders=copy_images
             )
         else:  # CSV
             results = inferencer.predict_csv(
@@ -119,7 +127,8 @@ def main():
                 output_path=args.output,
                 class_names=class_names,
                 batch_size=args.batch_size,
-                num_workers=args.num_workers
+                num_workers=args.num_workers,
+                copy_images_to_class_folders=copy_images
             )
         
         # Print results summary
