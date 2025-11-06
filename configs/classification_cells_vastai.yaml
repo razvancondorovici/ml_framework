@@ -15,13 +15,13 @@ data:
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\small\train
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
   train_data_dir:
-    - /content/all/herlev_grouped/train
-    - /content/all/sipakmed_grouped_per_subject/train
-    - /content/all/sante_split/train
+    - /workspace/data/herlev_grouped/train
+    - /workspace/data/sipakmed_grouped_per_subject/train
+    - /workspace/data/sante_split/train
   val_data_dir:
-    - /content/all/herlev_grouped/val
-    - /content/all/sipakmed_grouped_per_subject/val
-    - /content/all/sante_split/val
+    - /workspace/data/herlev_grouped/val
+    - /workspace/data/sipakmed_grouped_per_subject/val
+    - /workspace/data/sante_split/val
   num_classes: 2
   class_names: ['normal', 'suspecte']
 
