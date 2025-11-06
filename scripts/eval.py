@@ -41,7 +41,12 @@ def create_dataset(config: Dict[str, Any], split: str = 'val') -> Any:
         num_classes = data_config.get('num_classes', 2)
         transform = get_segmentation_transforms_from_config(config, split=split, num_classes=num_classes)
     else:
-        transform = get_default_classification_transforms(split=split)
+        transform_config = config.get('transforms', {})
+        if transform_config:
+            from transforms.augmentations import get_classification_transforms
+            transform = get_classification_transforms(transform_config, split=split)
+        else:
+            transform = get_default_classification_transforms(split=split)
     
     # Create dataset
     if dataset_type == 'segmentation':

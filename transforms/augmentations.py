@@ -242,7 +242,7 @@ def get_albumentations_classification_transforms(config: Dict[str, Any],
     
 
     if config.get('grayscale', False):
-        transforms.append(A.RGBToGray(p=1.0))
+        transforms.append(A.ToGray(p=1.0))
 
     # Convert to tensor
     transforms.append(ToTensorV2())
@@ -294,8 +294,9 @@ def get_torchvision_classification_transforms(config: Dict[str, Any],
     
 
     if config.get('grayscale', False):
+        print("Adding grayscale transform")
         transforms.append(T.Grayscale(num_output_channels=3))
-        
+
     # Convert to tensor
     transforms.append(T.ToTensor())
     

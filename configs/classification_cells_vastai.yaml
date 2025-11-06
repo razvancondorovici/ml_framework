@@ -108,8 +108,8 @@ transforms:
   rotation: 15
   color_jitter: true
   hue_saturation_value: true
-  gaussian_noise: true
-  cutout: true
+  gaussian_noise: false
+  cutout: false
   grayscale: true
   normalize:
     mean: [0.485, 0.456, 0.406]
