@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 21_train_sipakmed_herlev_val_sante_hue_saturation_value
+  name: 22_finetune_only_classifier_on_sante
   seed: 42
 
 data:
@@ -35,7 +35,7 @@ dataloader:
 model:
   backbone: timm_efficientnet_b0
   pretrained: true
-  freeze_backbone: false
+  freeze_backbone: true
   dropout: 0.2
 
 loss:
