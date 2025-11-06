@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 20_train_sante_sipakmed_herlev_val_sante_sipakmed_herlev_hue_saturation_value
+  name: 21_train_sipakmed_herlev_val_sante_hue_saturation_value
   seed: 42
 
 data:
@@ -17,16 +17,13 @@ data:
   train_data_dir:
     - /workspace/data/herlev_grouped/train
     - /workspace/data/sipakmed_grouped_per_subject/train
-    - /workspace/data/sante_split/train
+    # - /workspace/data/sante_split/train
   val_data_dir:
-    - /workspace/data/herlev_grouped/val
-    - /workspace/data/sipakmed_grouped_per_subject/val
+    # - /workspace/data/herlev_grouped/val
+    # - /workspace/data/sipakmed_grouped_per_subject/val
     - /workspace/data/sante_split/val
   num_classes: 2
   class_names: ['normal', 'suspecte']
-
-
-checkpoint: c:\Facultate\CerviAssist\CellsClassification\SourceCode\ml_framework\runs\05_train_herlev_sipakmed_val_herlev_sipakmed\20251104_160125\checkpoints\epoch_036_0.9862.pt
 
 dataloader:
   batch_size: 64
@@ -56,11 +53,11 @@ optimizer:
 scheduler:
   name: cosine_warmup
   warmup_epochs: 10
-  total_epochs: 101
+  total_epochs: 31
   min_lr: 1e-6
 
 training:
-  epochs: 101
+  epochs: 31
   amp: true
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
