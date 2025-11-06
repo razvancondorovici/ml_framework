@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 19_train_sante_sipakmed_herlev_val_sante_sipakmed_herlev
+  name: 20_train_sante_sipakmed_herlev_val_sante_sipakmed_herlev_hue_saturation_value
   seed: 42
 
 data:
@@ -29,7 +29,7 @@ data:
 checkpoint: c:\Facultate\CerviAssist\CellsClassification\SourceCode\ml_framework\runs\05_train_herlev_sipakmed_val_herlev_sipakmed\20251104_160125\checkpoints\epoch_036_0.9862.pt
 
 dataloader:
-  batch_size: 32
+  batch_size: 64
   num_workers: 4
   pin_memory: true
   persistent_workers: true
@@ -105,12 +105,16 @@ transforms:
   resize: 224
   horizontal_flip: true
   vertical_flip: false
-  rotation: 15
+  rotation: 45
   color_jitter: true
   hue_saturation_value: true
+  hue_saturation_value_hue_shift_limit: 180
+  hue_saturation_value_sat_shift_limit: 128
+  hue_saturation_value_val_shift_limit: 10
+  hue_saturation_value_probability: 1.0
   gaussian_noise: false
   cutout: false
-  grayscale: true
+  grayscale: false
   normalize:
     mean: [0.485, 0.456, 0.406]
     std: [0.229, 0.224, 0.225]

@@ -206,10 +206,10 @@ def get_albumentations_classification_transforms(config: Dict[str, Any],
         
         if config.get('hue_saturation_value', False):
             transforms.append(A.HueSaturationValue(
-                hue_shift_limit=20,
-                sat_shift_limit=30,
-                val_shift_limit=20,
-                p=0.5
+                hue_shift_limit=config.get('hue_saturation_value_hue_shift_limit', 20),
+                sat_shift_limit=config.get('hue_saturation_value_sat_shift_limit', 30),
+                val_shift_limit=config.get('hue_saturation_value_val_shift_limit', 20),
+                p=config.get('hue_saturation_value_probability', 0.5)
             ))
         
         # Noise and blur
