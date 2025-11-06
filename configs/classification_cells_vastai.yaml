@@ -15,9 +15,9 @@ data:
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\small\train
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
   train_data_dir:
-    - /workspace/data/herlev_grouped/train
-    - /workspace/data/sipakmed_grouped_per_subject/train
-    # - /workspace/data/sante_split/train
+    # - /workspace/data/herlev_grouped/train
+    # - /workspace/data/sipakmed_grouped_per_subject/train
+    - /workspace/data/sante_split/train
   val_data_dir:
     # - /workspace/data/herlev_grouped/val
     # - /workspace/data/sipakmed_grouped_per_subject/val
