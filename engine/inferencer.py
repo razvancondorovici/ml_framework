@@ -96,25 +96,19 @@ class Inferencer:
         all_predictions = []
         all_probabilities = []
         all_logits = []
-        
+        gt = []
         self.logger.info(f"Starting inference on {len(dataloader)} batches")
-        
+        self.model.eval()
+
         with torch.no_grad():
-            for batch_idx, (inputs, _) in enumerate(tqdm(dataloader, desc="Inferencing")):
+            for batch_idx, (inputs, labels) in enumerate(tqdm(dataloader, desc="Inferencing")):
                 # Move to device
                 inputs = move_to_device(inputs, self.device)
-                
+                gt.extend(labels)
                 # Forward pass
                 if self.use_amp:
-                    test_autocast = True
-                    with autocast(): # output-ul poate sa fie nan pt datele proprii
-                        outputs_test = self.model(inputs)
-                    if all(outputs_test[0,:].isnan()) and all(outputs_test[0,:].isnan()):
+                    with torch.autocast("cuda"):
                         outputs = self.model(inputs)
-                        test_autocast = False
-                    if test_autocast:
-                        with autocast():
-                            outputs = self.model(inputs)
                 else:
                     outputs = self.model(inputs)
                 
@@ -141,9 +135,10 @@ class Inferencer:
         if all_logits:
             results['logits'] = torch.cat(all_logits).numpy()
         if all_probabilities:
-            results['probabilities'] = torch.cat(all_probabilities).numpy()
+            results['probabilities'] = torch.cat(all_probabilities)#.to(torch.float32).cpu().numpy()
         if all_predictions:
             results['predictions'] = torch.cat(all_predictions).numpy()
+        results["gt"] = [gt_item.cpu().detach().item() for gt_item in gt]
         
         return results
     
@@ -298,12 +293,11 @@ class Inferencer:
         # Create results
         results_data = []
         class_names = class_names if class_names else dataset.class_names
-        for i, image_file in enumerate(dataset.samples):
+        for idx, data in enumerate(results["gt"]):
             result = {
-                'image_path': str(image_file[0]),
-                'prediction': int(predictions[i]),
-                'GT': int(class_names.index(dataset.samples[i][1])),
-                'confidence': float(probabilities[i].max())
+                'prediction': int(predictions[idx]),
+                'GT': data,
+                'confidence': float(probabilities[idx].max())
             }
             
             # Add class name if provided - I don't like how this looks
@@ -314,7 +308,7 @@ class Inferencer:
             if class_names:
                 for j, class_name in enumerate(class_names):
                     if j < probabilities.shape[1]:
-                        result[f'prob_{class_name}'] = float(probabilities[i, j])
+                        result[f'prob_{class_name}'] = float(probabilities[idx, j])
             
             results_data.append(result)
         
@@ -523,6 +517,7 @@ class Inferencer:
                 # Save JSON
                 json_path = output_path.with_suffix('.json')
                 results_df.to_json(json_path, orient='records', indent=2)
+                output_path = os.path.dirname(output_path)
 
                 self.logger.info(f"Results saved to {csv_path} and {json_path}")
 

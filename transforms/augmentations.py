@@ -34,9 +34,9 @@ class AlbumentationsTransform:
         
         # Convert back to tensor; but check if it's a tensor first
         if not torch.is_tensor(transformed['image']):
-            return torch.from_numpy(transformed['image']).permute(2, 0, 1).float() / 255.0 # adapt for diff. architectures
+            return torch.from_numpy(transformed['image']).permute(2, 0, 1).float()
         else:
-            return transformed['image'].float() / 255.0
+            return transformed['image'].float()
 
 
 class AlbumentationsSegmentationTransform:
@@ -235,16 +235,19 @@ def get_albumentations_classification_transforms(config: Dict[str, Any],
 
         if config.get('clahe', False):
             transforms.append(A.CLAHE(clip_limit=2.0, tile_grid_size=(4, 4), p=0.3))
-    
+
     # Normalization
     if 'normalize' in config:
         mean = config['normalize'].get('mean', [0.485, 0.456, 0.406])
         std = config['normalize'].get('std', [0.229, 0.224, 0.225])
-        transforms.append(A.Normalize(mean=mean, std=std))
-    
+        transforms.append(A.Normalize(mean=mean,
+                                      std=std,
+                                      # max_pixel_value=255.0
+                                      ))
+
     # Convert to tensor
     transforms.append(ToTensorV2())
-    
+
     # Create transform pipeline
     transform = A.Compose(transforms)
     
@@ -433,7 +436,7 @@ def get_default_classification_transforms(image_size: int = 224,
     if 'color_jitter' in transforms_config:
         config['color_jitter'] = (split == 'train') & transforms_config['color_jitter']
 
-    return get_classification_transforms(config, split)
+    return get_classification_transforms(config, split) # bug pt train/val
 
 
 def get_segmentation_transforms_from_config(config: Dict[str, Any],

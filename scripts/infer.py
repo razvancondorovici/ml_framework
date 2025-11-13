@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 import torch
@@ -33,7 +34,16 @@ def create_model(config: Dict[str, Any]) -> Any:
     """
     model_config = config['model']
     data_config = config['data']
-    
+    # Get the mode
+
+    mode = "test"
+    patterns = [r"train", r"val", r"test"]
+    for pat in patterns:
+        filtered = re.search(pat, config.input)
+        if filtered:
+            mode = config.input[filtered.regs[0][0]: filtered.regs[0][1]].split(os.sep)[0]
+            break
+
     # Get model parameters
     backbone = model_config.get('backbone', 'resnet50')
     num_classes = data_config.get('num_classes', 10)
@@ -55,7 +65,8 @@ def create_model(config: Dict[str, Any]) -> Any:
             num_classes=num_classes,
             pretrained=pretrained,
             freeze_backbone=freeze_backbone,
-            dropout=dropout
+            dropout=dropout,
+            mode=mode
         )
     
     return model
@@ -139,9 +150,9 @@ def main():
             sample_results = results['results'].head(5)
             for _, row in sample_results.iterrows():
                 if 'class_name' in row:
-                    logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
+                    logger.info(f" {row['class_name']} (confidence: {row['confidence']:.3f})")
                 else:
-                    logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
+                    logger.info(f" class {row['prediction']} (confidence: {row['confidence']:.3f})")
         
         logger.info("Inference completed successfully", num_images=len(results['results']))
         

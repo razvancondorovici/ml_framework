@@ -49,15 +49,14 @@ def create_model(config: Dict[str, Any]) -> Any:
         num_classes=num_classes,
         pretrained=True,
         freeze_backbone=True,
-        dropout=0.0
+        dropout=config["model"]["dropout"],
+        mode="test"
     )
     for param in model.parameters():
         param.requires_grad = False
     model.eval()
 
     return model
-
-
 
 def main():
     """Main subject wise testing function."""
