@@ -167,6 +167,7 @@ def build_classifier(backbone: str,
                     pretrained: bool = True,
                     freeze_backbone: bool = False,
                     dropout: float = 0.0,
+                    mode: str = "train",
                     **kwargs) -> nn.Module:
     """Build a classification model.
     
@@ -176,6 +177,7 @@ def build_classifier(backbone: str,
         pretrained: Whether to use pretrained weights
         freeze_backbone: Whether to freeze backbone parameters
         dropout: Dropout rate for classifier head
+        mode: to be written ...
         **kwargs: Additional arguments for model creation
         
     Returns:
@@ -186,22 +188,36 @@ def build_classifier(backbone: str,
     
     # Create model
     model = model_fn(num_classes=num_classes, pretrained=pretrained, **kwargs)
-    
+
     # Freeze backbone if requested
     if freeze_backbone:
         for param in model.parameters():
             param.requires_grad = False
-        
-        # Unfreeze classifier head
-        if hasattr(model, 'classifier'):
-            for param in model.classifier.parameters():
-                param.requires_grad = True
-        elif hasattr(model, 'fc'):
-            for param in model.fc.parameters():
-                param.requires_grad = True
-        elif hasattr(model, 'head'):
-            for param in model.head.parameters():
-                param.requires_grad = True
+
+        if mode == "train":
+            if hasattr(model, 'classifier'):
+                for param in model.classifier.parameters():
+                    param.requires_grad = True
+            elif hasattr(model, 'fc'):
+                for param in model.fc.parameters():
+                    param.requires_grad = True
+            elif hasattr(model, 'head'):
+                for param in model.head.parameters():
+                    param.requires_grad = True
+        else:
+            if hasattr(model, 'classifier'):
+                for param in model.classifier.parameters():
+                        param.requires_grad = False
+            for m in model.modules():
+                if isinstance(m, torch.nn.BatchNorm2d):
+                    m.eval()  # freeze behavior
+                    m.requires_grad_(False)  # optional, to avoid updates
+                    m.weight.requires_grad = False
+                    m.bias.requires_grad = False
+
+            for m in model.modules():
+                if isinstance(m, torch.nn.Dropout):
+                    print(m.training)  # should all be False
     
     # Add dropout if specified
     if dropout > 0:
