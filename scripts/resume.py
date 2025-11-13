@@ -120,7 +120,8 @@ def create_model(config: Dict[str, Any]) -> Any:
             num_classes=num_classes,
             pretrained=pretrained,
             freeze_backbone=freeze_backbone,
-            dropout=dropout
+            dropout=dropout,
+            mode="train"
         )
     
     return model
