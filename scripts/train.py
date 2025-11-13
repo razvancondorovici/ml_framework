@@ -88,7 +88,7 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         # Create test dataset if test_data_dir is provided
         test_dataset = None
         if 'test_data_dir' in data_config:
-            test_transform = get_default_classification_transforms(split='val', transforms_config=config["transforms"])
+            test_transform = get_default_classification_transforms(split='test', transforms_config=config["transforms"])
             test_dataset = create_classification_dataset({
                 **data_config,
                 'transform': test_transform

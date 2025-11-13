@@ -2,14 +2,16 @@
 
 import os
 import random
+import numpy as np
 import pandas as pd
 import re
 from pathlib import Path
 from typing import List, Optional, Union, Dict, Any, Callable
 import torch
 from torch.utils.data import Dataset
+import albumentations as A
 from PIL import Image
-import numpy as np
+from omegaconf import ListConfig
 
 
 class ImageClassificationDataset(Dataset):
@@ -33,14 +35,25 @@ class ImageClassificationDataset(Dataset):
             transform: Image transformations
             target_transform: Target transformations
         """
-        self.data_dir = Path(data_dir)
+        if isinstance(data_dir, ListConfig):
+            if len(data_dir) > 1:
+                    self.data_dir = [Path(dir) for dir in data_dir]
+        else:
+            self.data_dir = Path(data_dir)
         self.transform = transform
         self.target_transform = target_transform
-        
+        self.multiple_datasets = False
         if annotations_file is not None:
             # Load from CSV
-            mode = os.path.basename(data_dir)
-            self.samples = self._load_from_csv(annotations_file, mode)
+            if isinstance(annotations_file, ListConfig):
+                if len(annotations_file) > 1:
+                        mode = os.path.basename(data_dir[0])
+                        self.samples = []
+                        for idx in range(len(data_dir)):
+                            self.samples.extend(self._load_from_csv(annotations_file[idx], mode))
+            else:
+                mode = os.path.basename(data_dir)
+                self.samples = self._load_from_csv(annotations_file, mode)
         else:
             # Load from folder structure
             self.samples = self._load_from_folders()
@@ -70,26 +83,23 @@ class ImageClassificationDataset(Dataset):
         #   check if the system is running on Linux on a local machine
         if os.name == "posix":
             file_dir_kaggle_path = df.loc[df.index, df.columns[0]]
-            relativ_paths = [kaggle_path[str(Path(kaggle_path)).find(mode):] for kaggle_path in file_dir_kaggle_path]
+            relativ_paths = []
+            for kaggle_path in file_dir_kaggle_path:
+                path_str = str(Path(kaggle_path))
+                pos = path_str.find(mode)
+                if pos != -1:
+                    relativ_paths.append(path_str[pos:])
+
             normale = [no_path for no_path in relativ_paths if "normal" in no_path]
             suspecte = [sus_path for sus_path in relativ_paths if "suspect" in sus_path]
             root_dir = os.path.dirname(annotations_file)
             no_list = [os.path.join(root_dir, normal_path) for normal_path in normale]
             sus_list = [os.path.join(root_dir, suspect_path) for suspect_path in suspecte]
 
-            pattern = re.compile(r"normal")
-            filtered = pattern.search(no_list[0])
-            no_str = no_list[0][filtered.regs[0][0]: filtered.endpos].split(os.sep)[0]
-            pattern = re.compile(r"suspect")
-            filtered = pattern.search(sus_list[0])
-            sus_str = sus_list[0][filtered.regs[0][0]: filtered.endpos].split(os.sep)[0]
-
-            no_labels = [no_str] * len(no_list)
-            sus_labels = [sus_str] * len(sus_list)
+            no_labels = ["normal"] * len(no_list)
+            sus_labels = ["suspect"] * len(sus_list)
             samples = list(zip(no_list, no_labels))
             samples.extend(zip(sus_list, sus_labels))
-            random.seed(42) # datele vor veni mereu shuffled, indiferent de cine apeleaza metoda!
-            random.shuffle(samples) # Posibil redundant; argument controlat de dataloader
 
         else: # Past functionality remains the same
             image_col = df.columns[0]
@@ -155,7 +165,12 @@ class ImageClassificationDataset(Dataset):
         # Convert label to index if it's a string
         if isinstance(label, str):
             label = self.class_to_idx[label]
-        
+
+        if self.multiple_datasets:
+            conditional_gaussian = A.Compose([A.GaussNoise(var_limit=(10.0, 40.0), p=0.5)])
+            image = conditional_gaussian(image=np.array(image))["image"]
+            image = Image.fromarray(image)
+
         # Apply transforms
         if self.transform is not None:
             image = self.transform(image)
@@ -321,11 +336,11 @@ class MultiLabelClassificationDataset(Dataset):
         
         # Convert labels to tensor
         labels = torch.tensor(labels, dtype=torch.float32)
-        
+
         # Apply transforms
         if self.transform is not None:
             image = self.transform(image)
-        
+
         if self.target_transform is not None:
             labels = self.target_transform(labels)
         

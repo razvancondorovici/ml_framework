@@ -219,7 +219,14 @@ class Trainer:
         
         # Progress bar
         pbar = tqdm(self.train_dataloader, desc=f"Epoch {self.current_epoch}")
-        
+        self.train_dataloader.dataset.sipakmed_train_flag = False
+        for idx_sipakmed in self.train_dataloader.dataset.samples:
+            if "sipakmed" in str(idx_sipakmed[0]).lower() and "train" in str(idx_sipakmed[0]).lower():
+                self.train_dataloader.dataset.sipakmed_train_flag = True
+            if "sipakmed" not in str(idx_sipakmed[0]).lower() and self.train_dataloader.dataset.sipakmed_train_flag:
+                self.train_dataloader.dataset.multiple_datasets = True
+                break
+
         for batch_idx, (inputs, targets) in enumerate(pbar):
             # Move to device
             inputs = move_to_device(inputs, self.device)
@@ -306,7 +313,7 @@ class Trainer:
         
         self.model.eval()
         self.metrics.reset()
-        
+
         total_loss = 0.0
         num_batches = len(self.val_dataloader)
         
