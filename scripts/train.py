@@ -2,11 +2,13 @@
 """Training script for PyTorch models."""
 
 import argparse
+import copy
 import os.path
 import sys
 import subprocess
 from pathlib import Path
 from typing import Dict, Any
+from omegaconf import ListConfig
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -35,11 +37,12 @@ from callbacks.checkpoint import ModelCheckpoint, EarlyStopping
 from callbacks.base import CallbackList
 
 
-def create_datasets(config: Dict[str, Any]) -> tuple:
+def create_datasets(config: Dict[str, Any], txt_files_flag: bool) -> tuple:
     """Create training and validation datasets.
     
     Args:
         config: Configuration dictionary
+        txt_files_flag: to be written ...
         
     Returns:
         Tuple of (train_dataset, val_dataset, test_dataset)
@@ -79,11 +82,11 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         train_dataset = create_classification_dataset({
             **data_config,
             'transform': train_transform
-        }, split='train')
+        }, split='train', txt_files_flag = txt_files_flag)
         val_dataset = create_classification_dataset({
             **data_config,
             'transform': val_transform
-        }, split='val')
+        }, split='val', txt_files_flag = txt_files_flag)
         
         # Create test dataset if test_data_dir is provided
         test_dataset = None
@@ -92,7 +95,7 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
             test_dataset = create_classification_dataset({
                 **data_config,
                 'transform': test_transform
-            }, split='test')
+            }, split='test', txt_files_flag = txt_files_flag)
     
     return train_dataset, val_dataset, test_dataset
 
@@ -263,98 +266,206 @@ def main():
     
     try:
         # Create datasets
-        print("Creating datasets...")
-        train_dataset, val_dataset, test_dataset = create_datasets(config)
-        print(f"Train dataset: {len(train_dataset)} samples")
-        if val_dataset:
-            print(f"Val dataset: {len(val_dataset)} samples")
-        
-        # Create data loaders
-        from torch.utils.data import DataLoader
-        
-        dataloader_config = config.get('dataloader', {})
-        train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=dataloader_config.get('batch_size', 32),
-            shuffle=True,
-            num_workers=dataloader_config.get('num_workers', 4),
-            pin_memory=dataloader_config.get('pin_memory', True),
-            persistent_workers=dataloader_config.get('persistent_workers', True),
-            drop_last=dataloader_config.get('drop_last', False)
-        )
-        
-        val_dataloader = None
-        if val_dataset:
-            val_dataloader = DataLoader(
-                val_dataset,
+        txt_files_flag = True if "txt" in args.config else False
+
+        if txt_files_flag:
+            logger.info("Start training using Kfold Cross Validation")
+
+            for data_dir_idx in range(len(config.data.train_data_txt)):
+                config_folds = copy.deepcopy(config)
+                run_folder_copy = copy.deepcopy(run_folder)
+                if "txt" in str(config_folds.data.train_data_txt[data_dir_idx]):
+                    for dirpath, dirnames, filenames in os.walk(str(config_folds.data.train_data_txt[data_dir_idx])):
+                        for _, filename in enumerate(filenames):
+                            if "test" in filename or filename.endswith(".zip"):
+                                continue
+
+                            run_folder = Path(os.path.join(run_folder_copy, "fold_"+str(filename)))
+                            new_train_dir = os.path.join(config.data.train_data_txt[data_dir_idx], filename)
+                            new_data_dir = [config.data.train_data_txt[item]
+                                            for item in range(len(config_folds.data.train_data_txt)) if item != data_dir_idx]
+                            new_data_dir.append(new_train_dir)
+                            config_folds.data.train_data_txt = ListConfig(new_data_dir)
+                            # Get the val/test txt paths
+                            new_val_dir = new_train_dir.replace("training", "test")
+                            new_val_list = [config.data.val_data_txt[item]
+                                            for item in range(len(config.data.val_data_txt)) if item != data_dir_idx]
+                            new_val_list.append(new_val_dir)
+                            config_folds.data.val_data_txt = ListConfig(new_val_list)
+                            # Get the val/test txt paths
+                            new_test_dir = new_train_dir.replace("training", "test")
+                            new_test_list = [config.data.test_data_txt[item]
+                                            for item in range(len(config.data.test_data_txt)) if item != data_dir_idx]
+                            new_test_list.append(new_test_dir)
+                            config_folds.data.test_data_txt = ListConfig(new_test_list)
+
+                            print("Creating datasets...")
+                            print(new_data_dir)
+                            print(new_val_list)
+                            print(new_test_list)
+                            train_dataset, val_dataset, test_dataset = create_datasets(config_folds, txt_files_flag)
+                            print(f"Train dataset: {len(train_dataset)} samples")
+                            if val_dataset:
+                                print(f"Val dataset: {len(val_dataset)} samples")
+
+                            # Create data loaders
+                            from torch.utils.data import DataLoader
+
+                            dataloader_config = config.get('dataloader', {})
+                            train_dataloader = DataLoader(
+                                train_dataset,
+                                batch_size=dataloader_config.get('batch_size', 32),
+                                shuffle=True,
+                                num_workers=dataloader_config.get('num_workers', 4),
+                                pin_memory=dataloader_config.get('pin_memory', True),
+                                persistent_workers=dataloader_config.get('persistent_workers', True),
+                                drop_last=dataloader_config.get('drop_last', False)
+                            )
+
+                            val_dataloader = None
+                            if val_dataset:
+                                val_dataloader = DataLoader(
+                                    val_dataset,
+                                    batch_size=dataloader_config.get('batch_size', 32),
+                                    shuffle=False,
+                                    num_workers=dataloader_config.get('num_workers', 4),
+                                    pin_memory=dataloader_config.get('pin_memory', True),
+                                    persistent_workers=dataloader_config.get('persistent_workers', True),
+                                    drop_last=dataloader_config.get('drop_last', False)
+                                )
+
+                            # Create model
+                            print("Creating model...")
+                            model = create_model(config)
+                            print(f"Model: {type(model).__name__}")
+
+                            # Create callbacks
+                            print("Creating callbacks...")
+                            callbacks = create_callbacks(config, run_folder)
+
+                            # Create trainer
+                            print("Creating trainer...")
+                            trainer = Trainer(
+                                model=model,
+                                train_dataloader=train_dataloader,
+                                val_dataloader=val_dataloader,
+                                config=config,
+                                device=device,
+                                callbacks=callbacks
+                            )
+
+                            # Train model
+                            print("Starting training...")
+                            epochs = config.get('training', {}).get('epochs', 100)
+                            history = trainer.fit(epochs=epochs, resume_from_checkpoint=args.resume)
+
+                            # Save training history
+                            import json
+                            history_path = run_folder / 'training_history.json'
+                            with open(history_path, 'w') as f:
+                                # Convert numpy arrays to lists for JSON serialization
+                                serializable_history = {}
+                                for key, value in history.items():
+                                    if isinstance(value, list) and value and hasattr(value[0], 'tolist'):
+                                        serializable_history[key] = [v.tolist() if hasattr(v, 'tolist') else v for v in
+                                                                     value]
+                                    else:
+                                        serializable_history[key] = value
+                                json.dump(serializable_history, f, indent=2)
+
+                            print(f"Training completed! Results saved to {run_folder}")
+                            logger.info("Training completed successfully")
+        else:
+
+            print("Creating datasets...")
+            train_dataset, val_dataset, test_dataset = create_datasets(config, txt_files_flag)
+            print(f"Train dataset: {len(train_dataset)} samples")
+            if val_dataset:
+                print(f"Val dataset: {len(val_dataset)} samples")
+
+            # Create data loaders
+            from torch.utils.data import DataLoader
+
+            dataloader_config = config.get('dataloader', {})
+            train_dataloader = DataLoader(
+                train_dataset,
                 batch_size=dataloader_config.get('batch_size', 32),
-                shuffle=False,
+                shuffle=True,
                 num_workers=dataloader_config.get('num_workers', 4),
                 pin_memory=dataloader_config.get('pin_memory', True),
                 persistent_workers=dataloader_config.get('persistent_workers', True),
                 drop_last=dataloader_config.get('drop_last', False)
             )
-        
-        # Create model
-        print("Creating model...")
-        model = create_model(config)
-        print(f"Model: {type(model).__name__}")
-        
-        # Create callbacks
-        print("Creating callbacks...")
-        callbacks = create_callbacks(config, run_folder)
-        
-        # Create trainer
-        print("Creating trainer...")
-        trainer = Trainer(
-            model=model,
-            train_dataloader=train_dataloader,
-            val_dataloader=val_dataloader,
-            config=config,
-            device=device,
-            callbacks=callbacks
-        )
-        
-        # Train model
-        # ToDo: add functionality for training on k folds
-        # asta ar trebui cuprinsa intr-un alt for care sa cuprinda fit ul
-        # si un dataloader care sa citeasca din txt urile de pe cervi - sante
-        print("Starting training...")
-        epochs = config.get('training', {}).get('epochs', 100)
-        history = trainer.fit(epochs=epochs, resume_from_checkpoint=args.resume)
-        
-        # Save training history
-        import json
-        history_path = run_folder / 'training_history.json'
-        with open(history_path, 'w') as f:
-            # Convert numpy arrays to lists for JSON serialization
-            serializable_history = {}
-            for key, value in history.items():
-                if isinstance(value, list) and value and hasattr(value[0], 'tolist'):
-                    serializable_history[key] = [v.tolist() if hasattr(v, 'tolist') else v for v in value]
-                else:
-                    serializable_history[key] = value
-            json.dump(serializable_history, f, indent=2)
-        
-        print(f"Training completed! Results saved to {run_folder}")
-        logger.info("Training completed successfully")
+
+            val_dataloader = None
+            if val_dataset:
+                val_dataloader = DataLoader(
+                    val_dataset,
+                    batch_size=dataloader_config.get('batch_size', 32),
+                    shuffle=False,
+                    num_workers=dataloader_config.get('num_workers', 4),
+                    pin_memory=dataloader_config.get('pin_memory', True),
+                    persistent_workers=dataloader_config.get('persistent_workers', True),
+                    drop_last=dataloader_config.get('drop_last', False)
+                )
+
+            # Create model
+            print("Creating model...")
+            model = create_model(config)
+            print(f"Model: {type(model).__name__}")
+
+            # Create callbacks
+            print("Creating callbacks...")
+            callbacks = create_callbacks(config, run_folder)
+
+            # Create trainer
+            print("Creating trainer...")
+            trainer = Trainer(
+                model=model,
+                train_dataloader=train_dataloader,
+                val_dataloader=val_dataloader,
+                config=config,
+                device=device,
+                callbacks=callbacks
+            )
+
+            # Train model
+            print("Starting training...")
+            epochs = config.get('training', {}).get('epochs', 100)
+            history = trainer.fit(epochs=epochs, resume_from_checkpoint=args.resume)
+
+            # Save training history
+            import json
+            history_path = run_folder / 'training_history.json'
+            with open(history_path, 'w') as f:
+                # Convert numpy arrays to lists for JSON serialization
+                serializable_history = {}
+                for key, value in history.items():
+                    if isinstance(value, list) and value and hasattr(value[0], 'tolist'):
+                        serializable_history[key] = [v.tolist() if hasattr(v, 'tolist') else v for v in value]
+                    else:
+                        serializable_history[key] = value
+                json.dump(serializable_history, f, indent=2)
+
+            print(f"Training completed! Results saved to {run_folder}")
+            logger.info("Training completed successfully")
         
     except Exception as e:
         logger.error(f"Training failed: {e}")
         raise
-    best_checkpoint_path = history["best_checkpoint"]
-    # not entirely humanly generated
-    if os.path.exists(config.data.get('test_config_file', " ")):
-        logger.info(f"Starting the inference on {config.data.get('test_config_file', " ")}")
-        with subprocess.Popen(
-                ["python3", "scripts/infer.py", "--config", config.data.get('test_config_file'),
-                 "--checkpoint", best_checkpoint_path],
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-        ) as proc:
-            for line in proc.stdout:
-                print(line, end="")
+    # best_checkpoint_path = history["best_checkpoint"]
+    # # not entirely humanly generated
+    # if os.path.exists(config.data.get('test_config_file', " ")):
+    #     logger.info(f"Starting the inference on {config.data.get('test_config_file', " ")}")
+    #     with subprocess.Popen(
+    #             ["python3", "scripts/infer.py", "--config", config.data.get('test_config_file'),
+    #              "--checkpoint", best_checkpoint_path],
+    #             text=True,
+    #             stdout=subprocess.PIPE,
+    #             stderr=subprocess.STDOUT
+    #     ) as proc:
+    #         for line in proc.stdout:
+    #             print(line, end="")
 
 
 if __name__ == '__main__':

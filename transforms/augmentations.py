@@ -172,7 +172,10 @@ def get_albumentations_classification_transforms(config: Dict[str, Any],
         if isinstance(size, int):
             size = (size, size)
         transforms.append(A.Resize(size[0], size[1]))
-    
+
+    if config.get('grayscale', False):
+        transforms.append(A.ToGray(p=1.0))
+
     # Training augmentations
     if split == 'train' and not deterministic:
         # Geometric transforms
@@ -422,6 +425,7 @@ def get_default_classification_transforms(image_size: int = 224,
     """
     config = {
         'resize': image_size,
+        'grayscale': transforms_config.get('grayscale', False),
         'horizontal_flip': transforms_config.get('horizontal_flip', False),
         'vertical_flip': transforms_config.get('vertical_flip', False),
         'rotation': transforms_config.get('rotation', False),

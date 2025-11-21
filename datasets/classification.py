@@ -25,7 +25,8 @@ class ImageClassificationDataset(Dataset):
                  annotations_file: Optional[Union[str, Path]] = None,
                  class_names: Optional[List[str]] = None,
                  transform: Optional[Callable] = None,
-                 target_transform: Optional[Callable] = None):
+                 target_transform: Optional[Callable] = None,
+                 split: str = "Train"):
         """Initialize dataset.
         
         Args:
@@ -34,7 +35,10 @@ class ImageClassificationDataset(Dataset):
             class_names: List of class names (optional)
             transform: Image transformations
             target_transform: Target transformations
+            split: to be written
         """
+        self.sipakmed_blur = A.GaussianBlur(blur_limit=3, p=0.5)
+        self.samples = []
         if isinstance(data_dir, ListConfig):
             if len(data_dir) > 1:
                     self.data_dir = [Path(dir) for dir in data_dir]
@@ -43,17 +47,26 @@ class ImageClassificationDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.multiple_datasets = False
+
+        if isinstance(data_dir, ListConfig):
+            for dir in self.data_dir:
+                if "txt" in str(dir):
+                    self.samples.extend(self._load_from_txt_files(dir))
+                    self.data_dir.remove(dir)
+                    break
+
         if annotations_file is not None:
             # Load from CSV
             if isinstance(annotations_file, ListConfig):
                 if len(annotations_file) > 1:
-                        mode = os.path.basename(data_dir[0])
-                        self.samples = []
-                        for idx in range(len(data_dir)):
+                        mode = os.path.basename(self.data_dir[0])
+                        for idx in range(len(self.data_dir)):
                             self.samples.extend(self._load_from_csv(annotations_file[idx], mode))
             else:
                 mode = os.path.basename(data_dir)
                 self.samples = self._load_from_csv(annotations_file, mode)
+        elif "txt" in str(self.data_dir):
+            self.samples = self._load_from_txt_files(self.data_dir)
         else:
             # Load from folder structure
             self.samples = self._load_from_folders()
@@ -142,6 +155,23 @@ class ImageClassificationDataset(Dataset):
                     samples.append((str(image_file), class_name))
         
         return samples
+
+    def _load_from_txt_files(self, txt_file: Union[str, Path]) -> List[tuple]:
+        """Load relative samples paths from txt file.
+
+        """
+        txt_file_path = open(txt_file, "r")  # reopen file in read+append mode
+        samples = []
+        root_dir = os.path.dirname(os.path.dirname(txt_file))
+        for file in txt_file_path.readlines():
+            file = file.rstrip('\n')
+            if "normal" in file.split(os.sep)[0]:
+                label = "normal"
+            if "suspect" in file.split(os.sep)[0]:
+                label = "suspect"
+            samples.append((os.path.join(root_dir, file), label))
+        return samples
+
     
     def __len__(self) -> int:
         return len(self.samples)
@@ -167,9 +197,10 @@ class ImageClassificationDataset(Dataset):
             label = self.class_to_idx[label]
 
         if self.multiple_datasets:
-            conditional_gaussian = A.Compose([A.GaussNoise(var_limit=(10.0, 40.0), p=0.5)])
-            image = conditional_gaussian(image=np.array(image))["image"]
-            image = Image.fromarray(image)
+            if "sipakmed" in image_path.lower() and random.random() < 0.5:
+                image = np.array(image)
+                image = self.sipakmed_blur(image=image)["image"]
+                image = Image.fromarray(image)
 
         # Apply transforms
         if self.transform is not None:
@@ -188,19 +219,18 @@ class ImageClassificationDatasetTxtFiles(Dataset):
     """
 
     def __init__(self,
-                 txt_file: Union[str, Path],
+                 data_dir: Union[str, Path],
                  class_names: Optional[List[str]] = None,
                  transform: Optional[Callable] = None,
                  target_transform: Optional[Callable] = None):
         """Initialize dataset.
 
         Args:
-            txt_file: Directory containing images
+            data_dir: Directory containing images
             class_names: List of class names (optional)
             transform: Image transformations
             target_transform: Target transformations
         """
-        self.data_dir = Path(txt_file)
         self.transform = transform
         self.target_transform = target_transform
         self.samples = self._load_from_txt_files(self.data_dir)
@@ -399,5 +429,6 @@ def create_classification_dataset(config: Dict[str, Any], split: str = 'train', 
             annotations_file=annotations_file,
             class_names=class_names,
             transform=transform,
-            target_transform=target_transform
+            target_transform=target_transform,
+            split=split
         )
