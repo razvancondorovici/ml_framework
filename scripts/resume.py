@@ -43,8 +43,8 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         train_transform = get_segmentation_transforms_from_config(config, split='train', num_classes=num_classes)
         val_transform = get_segmentation_transforms_from_config(config, split='val', num_classes=num_classes)
     else:
-        train_transform = get_default_classification_transforms(split='train')
-        val_transform = get_default_classification_transforms(split='val')
+        train_transform = get_default_classification_transforms(split='train', transforms_config=config["transforms"])
+        val_transform = get_default_classification_transforms(split='val', transforms_config=config["transforms"])
     
     # Create datasets
     if dataset_type == 'segmentation':
@@ -78,7 +78,7 @@ def create_datasets(config: Dict[str, Any]) -> tuple:
         # Create test dataset if test_data_dir is provided
         test_dataset = None
         if 'test_data_dir' in data_config:
-            test_transform = get_default_classification_transforms(split='val')
+            test_transform = get_default_classification_transforms(split='test', transforms_config=config["transforms"])
             test_dataset = create_classification_dataset({
                 **data_config,
                 'transform': test_transform
@@ -313,7 +313,22 @@ def main():
         print("Resuming training...")
         epochs = config.get('training', {}).get('epochs', 100)
         history = trainer.fit(epochs=epochs, resume_from_checkpoint=checkpoint_path)
-        
+
+        # Save training history
+        import json
+        history_path = run_folder / 'training_history.json'
+        with open(history_path, 'w') as f:
+            # Convert numpy arrays to lists for JSON serialization
+            serializable_history = {}
+            for key, value in history.items():
+                if isinstance(value, list) and value and hasattr(value[0], 'tolist'):
+                    serializable_history[key] = [v.tolist() if hasattr(v, 'tolist') else v for v in value]
+                else:
+                    serializable_history[key] = value
+            json.dump(serializable_history, f, indent=2)
+
+        print(f"Training completed! Results saved to {run_folder}")
+        logger.info("Training completed successfully")
         print("Resume training completed!")
         logger.info("Resume training completed successfully")
         

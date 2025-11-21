@@ -147,6 +147,7 @@ def main():
                             logger.info(f"{row['image_path']}: {row['class_name']} (confidence: {row['confidence']:.3f})")
                         else:
                             logger.info(f"{row['image_path']}: class {row['prediction']} (confidence: {row['confidence']:.3f})")
+
                 if id not in seen_ids:
                     aggregate_results["GT"].extend(np.array(results['results'][id]['GT']))
                     aggregate_results["probs"].extend(np.array(results['probabilities'][id]))
