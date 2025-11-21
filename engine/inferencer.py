@@ -12,11 +12,12 @@ from PIL import Image
 from tqdm import tqdm
 import json
 import shutil
+import pickle
 
 from utils.device import get_device, move_to_device
 from utils.logger import StructuredLogger
 from utils.checkpoint import load_checkpoint
-from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
+from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms, get_classification_transforms
 
 
 class InferenceImageDataset(Dataset):
@@ -85,6 +86,10 @@ class Inferencer:
         self.output_format = self.config.get('output_format', 'probabilities')  # 'probabilities', 'predictions', 'logits'
         self.save_probabilities = self.config.get('save_probabilities', True)
         self.save_predictions = self.config.get('save_predictions', True)
+        
+        # Feature extraction mode
+        self.feature_extraction_mode = False
+        self.original_head = None
     
     def load_checkpoint(self, checkpoint_path: Union[str, Path]):
         """Load model from checkpoint.
@@ -102,6 +107,100 @@ class Inferencer:
         )
         
         self.logger.info(f"Loaded checkpoint from epoch {epoch}, best metric: {best_metric:.4f}")
+    
+    def enable_feature_extraction(self):
+        """Enable feature extraction mode by removing classification head."""
+        if self.feature_extraction_mode:
+            self.logger.warning("Feature extraction mode already enabled")
+            return
+        
+        # Store original head and replace with identity
+        if hasattr(self.model, 'forward_features'):
+            # timm models have forward_features method - we'll use that
+            self.feature_extraction_mode = True
+            self.logger.info("Using forward_features method for feature extraction")
+        elif hasattr(self.model, 'classifier'):
+            self.original_head = self.model.classifier
+            self.model.classifier = nn.Identity()
+            self.feature_extraction_mode = True
+            self.logger.info("Replaced classifier with Identity for feature extraction")
+        elif hasattr(self.model, 'fc'):
+            self.original_head = self.model.fc
+            self.model.fc = nn.Identity()
+            self.feature_extraction_mode = True
+            self.logger.info("Replaced fc with Identity for feature extraction")
+        elif hasattr(self.model, 'head'):
+            self.original_head = self.model.head
+            self.model.head = nn.Identity()
+            self.feature_extraction_mode = True
+            self.logger.info("Replaced head with Identity for feature extraction")
+        else:
+            raise ValueError("Could not identify classification head in model")
+    
+    def disable_feature_extraction(self):
+        """Disable feature extraction mode by restoring classification head."""
+        if not self.feature_extraction_mode:
+            self.logger.warning("Feature extraction mode not enabled")
+            return
+        
+        # Restore original head
+        if self.original_head is not None:
+            if hasattr(self.model, 'classifier'):
+                self.model.classifier = self.original_head
+            elif hasattr(self.model, 'fc'):
+                self.model.fc = self.original_head
+            elif hasattr(self.model, 'head'):
+                self.model.head = self.original_head
+            self.original_head = None
+        
+        self.feature_extraction_mode = False
+        self.logger.info("Feature extraction mode disabled")
+    
+    def extract_features(self, dataloader: DataLoader) -> Dict[str, np.ndarray]:
+        """Extract features from dataloader.
+        
+        Args:
+            dataloader: Data loader for feature extraction
+            
+        Returns:
+            Dictionary containing extracted features
+        """
+        if not self.feature_extraction_mode:
+            raise ValueError("Feature extraction mode not enabled. Call enable_feature_extraction() first.")
+        
+        all_features = []
+        
+        num_batches = len(dataloader)
+        self.logger.info(f"Extracting features from {num_batches} batches")
+        
+        with torch.no_grad():
+            for batch_idx, (inputs, _) in enumerate(tqdm(dataloader, desc="Extracting features")):
+                # Move to device
+                inputs = move_to_device(inputs, self.device)
+                
+                # Forward pass
+                if self.use_amp:
+                    with autocast():
+                        if hasattr(self.model, 'forward_features'):
+                            features = self.model.forward_features(inputs)
+                        else:
+                            features = self.model(inputs)
+                else:
+                    if hasattr(self.model, 'forward_features'):
+                        features = self.model.forward_features(inputs)
+                    else:
+                        features = self.model(inputs)
+                
+                # Global average pooling if features are 4D (B, C, H, W)
+                if features.dim() == 4:
+                    features = features.mean([2, 3])
+                
+                all_features.append(features.cpu())
+        
+        # Concatenate all features
+        all_features = torch.cat(all_features, dim=0).numpy()
+        
+        return all_features
     
     def predict(self, 
                 dataloader: DataLoader,
@@ -542,6 +641,121 @@ class Inferencer:
             'predictions': predictions,
             'probabilities': probabilities
         }
+    
+    def extract_features_from_folder(self,
+                                     folder_path: Union[str, Path],
+                                     output_path: Union[str, Path],
+                                     batch_size: int = 32,
+                                     num_workers: int = 4,
+                                     save_format: str = 'pickle') -> Dict[str, np.ndarray]:
+        """Extract features from images in a folder and save as dictionary.
+        
+        Args:
+            folder_path: Path to folder containing images
+            output_path: Path to save features dictionary
+            batch_size: Batch size for feature extraction
+            num_workers: Number of workers for data loading
+            save_format: Format to save features ('pickle', 'npz', or 'both')
+            
+        Returns:
+            Dictionary with {filename: features} pairs
+        """
+        folder_path = Path(folder_path)
+        output_path = Path(output_path)
+        
+        # Enable feature extraction mode
+        was_enabled = self.feature_extraction_mode
+        if not was_enabled:
+            self.enable_feature_extraction()
+        
+        try:
+            # Get image files - search recursively
+            image_files = []
+            for ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.JPG', '.JPEG', '.PNG', '.BMP', '.TIFF']:
+                image_files.extend(folder_path.glob(f'**/*{ext}'))
+                image_files.extend(folder_path.glob(f'*{ext}'))
+            
+            # Remove duplicates and sort
+            image_files = sorted(list(set(image_files)))
+            
+            if not image_files:
+                raise ValueError(f"No image files found in {folder_path}")
+            
+            self.logger.info(f"Found {len(image_files)} images in {folder_path}")
+            
+            # Get transforms from config
+            transform_config = self.config.get('transforms', {})
+            if transform_config:
+                # Use transforms from config
+                transform = get_classification_transforms(transform_config, split='test')
+            else:
+                # Use default transforms
+                transform = get_default_classification_transforms(split='test')
+            
+            # Create dataset
+            dataset = InferenceImageDataset(image_files, transform=transform)
+            
+            # Create dataloader
+            dataloader = DataLoader(
+                dataset,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+                pin_memory=True
+            )
+            
+            # Extract features
+            features = self.extract_features(dataloader)
+            
+            # Create dictionary with filename as key
+            features_dict = {}
+            for i, image_file in enumerate(image_files):
+                # Use just the filename (not full path) as key
+                filename = image_file.name
+                features_dict[filename] = features[i]
+            
+            # Create output directory if it doesn't exist
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Save features in requested format(s)
+            if save_format in ['pickle', 'both']:
+                pickle_path = output_path.with_suffix('.pkl')
+                with open(pickle_path, 'wb') as f:
+                    pickle.dump(features_dict, f)
+                self.logger.info(f"Features saved to {pickle_path}")
+                print(f"Features saved to {pickle_path}")
+            
+            if save_format in ['npz', 'both']:
+                npz_path = output_path.with_suffix('.npz')
+                # Save as npz (need to convert dict to arrays)
+                filenames = list(features_dict.keys())
+                features_array = np.array(list(features_dict.values()))
+                np.savez(npz_path, filenames=filenames, features=features_array)
+                self.logger.info(f"Features saved to {npz_path}")
+                print(f"Features saved to {npz_path}")
+            
+            # Also save a JSON with metadata
+            metadata = {
+                'num_images': len(image_files),
+                'feature_dim': features.shape[1],
+                'source_folder': str(folder_path),
+                'filenames': [str(f.name) for f in image_files]
+            }
+            metadata_path = output_path.parent / f"{output_path.stem}_metadata.json"
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            self.logger.info(f"Metadata saved to {metadata_path}")
+            
+            print(f"\nFeature extraction completed!")
+            print(f"Number of images: {len(image_files)}")
+            print(f"Feature dimension: {features.shape[1]}")
+            
+            return features_dict
+            
+        finally:
+            # Restore original state if we enabled it
+            if not was_enabled:
+                self.disable_feature_extraction()
     
     def export_model(self, 
                     export_path: Union[str, Path],

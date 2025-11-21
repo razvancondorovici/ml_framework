@@ -2,7 +2,7 @@
 # Example configuration for image classification with EfficientNet-B0
 
 experiment:
-  name: 03_train_sipakmed_val_sante
+  name: test_grayscale
   seed: 42
 
 data:
@@ -16,19 +16,17 @@ data:
   #   - c:\Facultate\CerviAssist\CellsClassification\Dataset\another\dataset\train
   train_data_dir:
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\train
-    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
-    # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\train
+    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\train
+    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\train
   val_data_dir:
     # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\val
     # - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sipakmed_grouped_per_subject\val
-    - C:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\val
+    - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\sante_split\val
   test_data_dir:  # Optional
     - c:\Facultate\CerviAssist\CellsClassification\Dataset\2025_11_03\all\herlev_grouped\test
   num_classes: 2
   class_names: ['normal', 'suspecte']
 
-
-checkpoint: c:\Facultate\CerviAssist\CellsClassification\SourceCode\ml_framework\runs\05_train_herlev_sipakmed_val_herlev_sipakmed\20251104_160125\checkpoints\epoch_036_0.9862.pt
 
 dataloader:
   batch_size: 32
@@ -62,7 +60,7 @@ scheduler:
   min_lr: 1e-6
 
 training:
-  epochs: 101
+  epochs: 2
   amp: true
   gradient_clip_norm: 1.0
   gradient_accumulation_steps: 1
@@ -104,12 +102,13 @@ callbacks:
     title: "Accuracy Progress"
 
 transforms:
+  grayscale: true
   resize: 224
   horizontal_flip: true
   vertical_flip: false
   rotation: 15
-  color_jitter: true
-  hue_saturation_value: true
+  # color_jitter: true
+  # hue_saturation_value: true
   gaussian_noise: true
   cutout: true
   normalize:

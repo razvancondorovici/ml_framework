@@ -70,6 +70,9 @@ def main():
     parser.add_argument('--tta', action='store_true', help='Use test-time augmentation')
     parser.add_argument('--device', type=str, help='Device to run inference on (cuda, cpu)')
     parser.add_argument('--no-copy-images', action='store_true', help='Do not copy images to class folders')
+    parser.add_argument('--extract-features', action='store_true', help='Extract features instead of making predictions')
+    parser.add_argument('--save-format', type=str, choices=['pickle', 'npz', 'both'], default='pickle',
+                       help='Format to save features (only used with --extract-features)')
     args = parser.parse_args()
     
     # Load configuration
@@ -105,7 +108,28 @@ def main():
         print(f"Loading checkpoint: {args.checkpoint}")
         inferencer.load_checkpoint(args.checkpoint)
         
-        # Run inference
+        # Check if feature extraction mode
+        if args.extract_features:
+            print("Starting feature extraction...")
+            if args.input_type != 'folder':
+                print("Warning: Feature extraction only supports folder input. Switching to folder mode.")
+            
+            features_dict = inferencer.extract_features_from_folder(
+                folder_path=args.input,
+                output_path=args.output,
+                batch_size=args.batch_size,
+                num_workers=args.num_workers,
+                save_format=args.save_format
+            )
+            
+            print(f"\nFeature extraction completed!")
+            print(f"Extracted features for {len(features_dict)} images")
+            print(f"Features saved to {args.output}")
+            
+            logger.info("Feature extraction completed successfully", num_images=len(features_dict))
+            return
+        
+        # Run inference (classification)
         print("Starting inference...")
         class_names = config.get('data', {}).get('class_names')
         
