@@ -14,7 +14,7 @@ data:
 #  class_names: ['normal', 'suspecte']
 
 dataloader:
-  batch_size: 32
+  batch_size: 64
   num_workers: 1
   pin_memory: true
   persistent_workers: true
@@ -44,6 +44,7 @@ callbacks:
 
 transforms:
   resize: 224
+  grayscale: true
   horizontal_flip: false
   vertical_flip: true
   rotation: 0
@@ -54,4 +55,4 @@ transforms:
   normalize:
     mean: [0.485, 0.456, 0.406]
     std: [0.229, 0.224, 0.225]
-  use_albumentations: false
+  use_albumentations: true

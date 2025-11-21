@@ -1,0 +1,105 @@
+# ResNet-50 Classification Configuration
+# Example configuration for image classification with ResNet-50
+# Work in Progress
+experiment:
+  name: kfold_training
+  seed: 42
+
+data:
+  dataset_type: efficientnet_classification
+  train_data_txt: [/media/andra/Extreme Pro/CerviAssistAI/tablouri/out_crops/txt_files/,
+                   /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/train,
+                   /media/andra/Extreme Pro/Herlev/herlev_grouped/train]
+  val_data_txt: [/media/andra/Extreme Pro/CerviAssistAI/tablouri/out_crops/txt_files/,
+                 /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/val,
+                 /media/andra/Extreme Pro/Herlev/herlev_grouped/val]
+  test_data_txt: [/media/andra/Extreme Pro/CerviAssistAI/tablouri/out_crops/txt_files/,
+                  /media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/test,
+                  /media/andra/Extreme Pro/Herlev/herlev_grouped/test]
+  annotations_file: [/media/andra/Extreme Pro/CerviAssistAI/sipakmed_grouped_per_subject/metadata.csv,
+                      /media/andra/Extreme Pro/Herlev/herlev_grouped/metadata.csv]
+
+  num_classes: 2
+
+dataloader:
+  batch_size: 64
+  num_workers: 2
+  pin_memory: true
+  persistent_workers: true
+  prefetch_factor: 2
+
+model:
+  backbone: timm_efficientnet_b0
+  pretrained: true
+  freeze_backbone: false
+  dropout: 0.3
+
+loss:
+  name: cross_entropy
+#  label_smoothing: 0.1
+
+optimizer:
+  name: adamw
+  lr: 1e-3
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+scheduler:
+  name: cosine_warmup
+  warmup_epochs: 5
+  total_epochs: 100
+  min_lr: 1e-6
+
+training:
+  epochs: 50
+  amp: true
+  gradient_clip_norm: 1.0
+  gradient_accumulation_steps: 1
+
+metrics:
+  task: binary
+  num_classes: 2
+  average: macro
+
+callbacks:
+  checkpoint:
+    monitor: val_loss
+    mode: min
+    save_top_k: 3
+    enabled: true
+
+  early_stopping:
+    monitor: val_loss
+    mode: min
+    patience: 10
+    enabled: true
+
+  sample_visualizer:
+    num_samples: 16
+    save_every_n_epochs: 5
+    enabled: true
+
+  confusion_matrix:
+    save_every_n_epochs: 10
+    enabled: true
+
+  learning_rate:
+    save_every_n_epochs: 10
+    enabled: true
+
+transforms:
+  resize: 224
+  grayscale: false
+  horizontal_flip: false
+  vertical_flip: true
+  rotation: 15
+  color_jitter: false
+  hue_saturation_value: false
+  gaussian_noise: false
+  cutout: false
+  clahe: false
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  use_albumentations: true
