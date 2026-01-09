@@ -1,8 +1,4 @@
 
-
-
-
-
 import argparse
 from datetime import datetime
 import os
@@ -64,13 +60,15 @@ def main():
     args = parser.parse_args()
 
     datetime_now = datetime.now()
-    new_test_dir = "_".join([str(datetime_now.month), str(datetime_now.day),
-                             str(datetime_now.hour), str(datetime_now.minute),
-                             str(datetime_now.second)])
 
     # Load configuration
     config = load_config(args.config)
     checkpoint_path = config.data.checkpoint
+    new_test_dir = "_".join([str(datetime_now.month), str(datetime_now.day),
+                             str(datetime_now.hour), str(datetime_now.minute),
+                             str(datetime_now.second),
+                             os.path.basename(os.path.dirname(os.path.dirname(checkpoint_path))).split(".")[0]]
+                            )
     # # Print device info
     device_info = get_device_info()
     print(f"Device info: {device_info}")
@@ -182,6 +180,11 @@ def main():
     logger.info(f"AUROC    -> {global_auroc}")
     logger.info(f"Classification report:")
     logger.info(classification_report(y_true, y_pred, zero_division=0))
+
+    from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+    cm = confusion_matrix(y_true, y_pred)
+    cm_plot = ConfusionMatrixDisplay(cm).plot()
+    cm_plot.figure_.savefig(os.path.join(Path(config['output'],'confusion_matrix_' + ".png")))
 
 
 if __name__ == '__main__':

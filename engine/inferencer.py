@@ -18,7 +18,7 @@ from utils.device import get_device, move_to_device
 from utils.logger import StructuredLogger
 from utils.checkpoint import load_checkpoint
 from transforms.augmentations import get_default_classification_transforms, get_default_segmentation_transforms
-from datasets.classification import ImageClassificationDatasetTxtFiles
+from datasets.classification import ImageClassificationDatasetTxtFiles, ImageClassificationDataset
 
 class Inferencer:
     """Inference engine for PyTorch models."""
@@ -297,7 +297,8 @@ class Inferencer:
             result = {
                 'prediction': int(predictions[idx]),
                 'GT': data,
-                'confidence': float(probabilities[idx].max())
+                'confidence': float(probabilities[idx].max()),
+                'path': dataloader.dataset.samples[idx][0]
             }
             
             # Add class name if provided - I don't like how this looks
@@ -329,6 +330,12 @@ class Inferencer:
             results_df.to_json(json_path, orient='records', indent=2)
             
             self.logger.info(f"Results saved to {csv_path} and {json_path}")
+
+            from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+            cm = confusion_matrix(results_df["GT"], np.array(predictions))
+            cm_plot = ConfusionMatrixDisplay(cm).plot()
+            cm_plot.figure_.savefig(os.path.join(output_path,
+                                                 'confusion_matrix_' + dataset.data_dir.parent.name + ".png"))
         
         return {
             'results': results_df,
@@ -370,7 +377,8 @@ class Inferencer:
         dataset = ImageClassificationDataset(
             data_dir=Path(csv_path).parent,
             annotations_file=csv_path,
-            transform=get_default_classification_transforms(split='test')
+            transform=get_default_classification_transforms(split='test'),
+
         )
 
         # Create dataloader
@@ -446,13 +454,16 @@ class Inferencer:
         Returns:
             Prediction results
         """
-        folder_path = Path(txt_path)
 
-        dataset = ImageClassificationDatasetTxtFiles(
-            txt_file=folder_path,
+        transforms = get_default_classification_transforms(split='test', transforms_config=self.config['transforms'])
+        dataset = ImageClassificationDataset(
+            data_dir=txt_path,
+            annotations_file=None,
             class_names=class_names,
-            transform=get_default_classification_transforms(image_size=self.config.transforms.resize, split='test',
-                                                            transforms_config=self.config.transforms))
+            transform=transforms,
+            target_transform=None,
+            split="test"
+        )
 
         # Create dataloader for every Unique ID
         unique_ids = np.unique(list(map(lambda x: x[0].split(os.sep)[-1].split("_")[0], dataset.samples)))
@@ -525,12 +536,31 @@ class Inferencer:
                 predictions_dict[int(id)] = predictions
                 probabilities_dict[int(id)] = probabilities
 
+                from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+                cm = confusion_matrix(results_df["GT"], np.array(predictions))
+                cm_plot = ConfusionMatrixDisplay(cm).plot()
+                cm_plot.figure_.savefig(os.path.join(output_path,
+                                                     'confusion_matrix_'+ dataset_to_copy.data_dir.name+f"_{id}" + ".png"))
+
         return {
             'results': results_dict,
             'predictions': predictions_dict,
             'probabilities': probabilities_dict
         }
-    
+
+    # results_dict[int(56636)] = results_df
+    # predictions_dict[int(56636)] = predictions
+    # probabilities_dict[int(56636)] = probabilities
+    #
+    # y_true = np.array(results_df["GT"])
+    # y_prob = np.array(probabilities)
+    # y_pred = np.array(predictions)
+    # from sklearn.metrics import f1_score, roc_auc_score, accuracy_score, classification_report
+    # global_f1 = f1_score(y_true, y_pred)
+    # global_auroc = roc_auc_score(y_true, y_prob[:, 1])
+    # global_acc = accuracy_score(y_true, y_pred)
+
+
     def export_model(self, 
                     export_path: Union[str, Path],
                     export_format: str = 'torchscript',

@@ -19,6 +19,7 @@ Subject Wise Testing/
 *.pth
 *.pt
 #*.pkl
+*.png
 *.pickle
 *.h5
 *.hdf5
