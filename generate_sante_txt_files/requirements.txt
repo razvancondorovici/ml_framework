@@ -1,0 +1,6 @@
+opencv-python
+python-Levenshtein
+numpy
+pandas
+seaborn
+matplotlib
